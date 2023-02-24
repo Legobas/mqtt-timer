@@ -2,6 +2,8 @@
 Programmable Timer for MQTT
 
 [![mqtt-smarthome](https://img.shields.io/badge/mqtt-smarthome-blue.svg)](https://github.com/mqtt-smarthome/mqtt-smarthome)
+[![Build](https://github.com/Legobas/mqtt-timer/actions/workflows/build.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/build.yml)
+
 
 MQTT-Timer is a programmable timer for MQTT messaging.
 Common daily or weekly timers can be specified in the configuration.
