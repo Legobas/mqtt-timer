@@ -15,6 +15,7 @@ import (
 	"github.com/nathan-osman/go-sunrise"
 )
 
+
 var config = getConfig()
 var sunriseTimer Timer
 var sunsetTimer Timer
