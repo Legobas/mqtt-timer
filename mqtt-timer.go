@@ -15,7 +15,6 @@ import (
 	"github.com/nathan-osman/go-sunrise"
 )
 
-
 var config = getConfig()
 var sunriseTimer Timer
 var sunsetTimer Timer
@@ -136,6 +135,7 @@ func setTimers(s *gocron.Scheduler) {
 }
 
 func offsetDuration(timer Timer) time.Duration {
+	// log.Printf("timer %v", timer)
 	offset := int64(0)
 
 	offsetStr := ""
@@ -153,21 +153,23 @@ func offsetDuration(timer Timer) time.Duration {
 	}
 
 	times := strings.Split(offsetStr, " ")
+	// log.Printf("times %v", times)
 	if len(times) == 2 && times[1][:3] == "sec" {
 		seconds, _ := strconv.Atoi(times[0])
 		if random {
-			offset = int64(rand.Intn(seconds) * 1000000000)
+			offset = int64(rand.Intn(seconds)) * int64(1000000000)
 		} else {
-			offset = int64(seconds * 1000000000)
+			offset = int64(seconds) * int64(1000000000)
 		}
 	} else if len(times) == 2 && times[1][:3] == "min" {
 		minutes, _ := strconv.Atoi(times[0])
 		if random {
-			offset = int64(rand.Intn(minutes) * 60000000000)
+			offset = int64(rand.Intn(minutes)) * int64(60000000000)
 		} else {
-			offset = int64(minutes * 60000000000)
+			offset = int64(minutes) * int64(60000000000)
 		}
 	}
+	// log.Printf("Offset: %d sec (src=%s) (random=%t)", offset/1000000000, offsetStr, random)
 	return time.Duration(offset)
 }
 
@@ -182,6 +184,7 @@ func timeWithOffset(timer Timer) time.Time {
 	}
 
 	times := strings.Split(offsetStr, " ")
+	// log.Printf("times %v", times)
 	if len(times) == 2 && times[1][:3] == "sec" {
 		offset, _ = strconv.Atoi(times[0])
 	} else if len(times) == 2 && times[1][:3] == "min" {
@@ -196,8 +199,10 @@ func timeWithOffset(timer Timer) time.Time {
 			log.Printf("Error: invalid time format: %s", timer.Time)
 		}
 	}
+	// log.Printf("timeWithOffset: oTime %s, from %s", oTime, timer.Time)
 	offsetTime = offsetTime.Add(time.Duration(-1*offset) * time.Second)
 
+	// log.Printf("timeWithOffset: At %s", oTime.Format("15:04:05"))
 	return offsetTime
 }
 
