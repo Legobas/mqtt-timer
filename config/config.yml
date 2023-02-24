@@ -1,0 +1,52 @@
+debug: false
+latitude: 51.50722
+longitude: -0.1275
+
+mqtt:
+  url: "tcp://<MQTT SERVER>:1883"
+  username: <MQTT USERNAME>
+  password: <MQTT PASSWORD>
+  qos: 0
+  retain: false
+
+timers:
+- id: 001
+  time: 22:30
+  description: Light outside on at 22:30
+  topic: shellies/Shelly1/relay/0/command
+  message: on
+- id: 002
+  time: sunrise
+  randomBefore: 20 minutes
+  before: 20 minutes
+  description: Light outside off 20 minutes before sunrise
+  topic: shellies/Shelly1/relay/0/command
+  message: off
+- id: 003
+  time: 06:57:01
+  days: mon,tue,wed,thu,fri
+  description: Wakeup with music on workdays
+  topic: homeassistant/music
+  message: '{"command": "play"}'
+- id: 004
+  time: 9:44
+  randomBefore: 15 min
+  days: sat,sun
+  description: Music on
+  topic: homeassistant/music
+  message: '{"command": "play"}'
+- id: 005
+  time: 1:15
+  days: monday
+  description: Backup server monday at 1:15
+  message: backup
+- id: 006
+  cron: 0 10 * * *
+  description: start wash machine at 10:00
+  topic: homeassistant/washmachine
+  message: '{"command": "start"}'
+- id: 007
+  cron: 25 30 4 * * *
+  description: start dishwasher at 4:30:25
+  topic: homeassistant/dishwasher
+  message: '{"command": "start"}'
