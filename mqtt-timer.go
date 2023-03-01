@@ -16,34 +16,22 @@ import (
 )
 
 var config = getConfig()
-var sunriseTimer Timer
-var sunsetTimer Timer
+var dailyTimers []Timer
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
+	log.SetFlags(0)
 }
 
 func handleEvent(timer Timer) {
-	log.Printf(timer.Id + " - " + timer.Description)
-	msg := ""
-
 	if timer.RandomBefore != "" || timer.After != "" || timer.RandomAfter != "" {
-		offset := "after"
-		if timer.RandomBefore != "" || timer.RandomAfter != "" {
-			if timer.RandomBefore != "" {
-				offset = "random (max " + timer.RandomBefore + ") before"
-			} else {
-				offset = "random (max " + timer.RandomAfter + ") after"
-			}
-		}
-		msg += fmt.Sprintf("Timer: %s %s ", offset, timer.Time)
 		time.Sleep(offsetDuration(timer))
-		log.Printf("Timer Event Exec: " + timer.Description)
 	}
+	log.Printf("%s: %s %s - %s", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
 
 	topic := TOPIC + "/" + timer.Id + "/time"
-	msg = time.Now().Format("2006-01-02 15:04:05")
-	sendToMtt(topic, msg)
+	msg := time.Now().Format("2006-01-02 15:04:05")
+	sendToMttRetain(topic, msg)
 
 	if timer.Topic != "" || timer.Message != "" {
 		topic = TOPIC + "/" + timer.Id + "/message"
@@ -63,11 +51,11 @@ func setTimers(s *gocron.Scheduler) {
 			// Cron
 			if len(strings.Split(timer.Cron, " ")) == 5 {
 				log.Printf("Scheduled '%s' Cron [%s] '%s'", timer.Id, timer.Cron, timer.Description)
-				s.Cron(timer.Cron).Do(handleEvent, timer)
+				s.Cron(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else if len(strings.Split(timer.Cron, " ")) == 6 {
 				// Cron with Seconds
 				log.Printf("Scheduled '%s' Cron [%s] '%s'", timer.Id, timer.Cron, timer.Description)
-				s.CronWithSeconds(timer.Cron).Do(handleEvent, timer)
+				s.CronWithSeconds(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else {
 				log.Printf("Invalid Cron format: [%s]", timer.Cron)
 			}
@@ -76,16 +64,6 @@ func setTimers(s *gocron.Scheduler) {
 			days := "daily"
 			if timer.Days != "" {
 				days = timer.Days
-			}
-			offset := "at"
-			if timer.Before != "" {
-				offset = timer.Before + " before"
-			} else if timer.RandomBefore != "" {
-				offset = "random max " + timer.RandomBefore + " before"
-			} else if timer.After != "" {
-				offset = timer.After + " after"
-			} else if timer.RandomAfter != "" {
-				offset = "random max " + timer.RandomAfter + " after"
 			}
 
 			match, _ := regexp.Match("^\\d{1,2}(:\\d{2}){1,2}$", []byte(timer.Time))
@@ -116,15 +94,12 @@ func setTimers(s *gocron.Scheduler) {
 					}
 				}
 				schedTime := timeWithOffset(timer)
-				schedule.At(schedTime).Do(handleEvent, timer)
+				schedule.At(schedTime).Tag(timer.Id).Do(handleEvent, timer)
 
-				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offset, timer.Time, timer.Description)
-			} else if timer.Time == "sunrise" {
-				sunriseTimer = timer
-				log.Printf("Scheduled '%s' %s %s sunrise '%s'", timer.Id, days, offset, timer.Description)
-			} else if timer.Time == "sunset" {
-				sunsetTimer = timer
-				log.Printf("Scheduled '%s' %s %s sunset: '%s'", timer.Id, days, offset, timer.Description)
+				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(timer), timer.Time, timer.Description)
+			} else if timer.Time == "sunrise" || timer.Time == "sunset" {
+				dailyTimers = append(dailyTimers, timer)
+				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(timer), timer.Time, timer.Description)
 			} else {
 				log.Printf("Invalid config [%v]", timer)
 			}
@@ -134,8 +109,21 @@ func setTimers(s *gocron.Scheduler) {
 	}
 }
 
+func offsetDescr(timer Timer) string {
+	descr := "at"
+	if timer.Before != "" {
+		descr = timer.Before + " before"
+	} else if timer.RandomBefore != "" {
+		descr = "random max " + timer.RandomBefore + " before"
+	} else if timer.After != "" {
+		descr = timer.After + " after"
+	} else if timer.RandomAfter != "" {
+		descr = "random max " + timer.RandomAfter + " after"
+	}
+	return descr
+}
+
 func offsetDuration(timer Timer) time.Duration {
-	// log.Printf("timer %v", timer)
 	offset := int64(0)
 
 	offsetStr := ""
@@ -153,7 +141,6 @@ func offsetDuration(timer Timer) time.Duration {
 	}
 
 	times := strings.Split(offsetStr, " ")
-	// log.Printf("times %v", times)
 	if len(times) == 2 && times[1][:3] == "sec" {
 		seconds, _ := strconv.Atoi(times[0])
 		if random {
@@ -169,7 +156,6 @@ func offsetDuration(timer Timer) time.Duration {
 			offset = int64(minutes) * int64(60000000000)
 		}
 	}
-	// log.Printf("Offset: %d sec (src=%s) (random=%t)", offset/1000000000, offsetStr, random)
 	return time.Duration(offset)
 }
 
@@ -184,7 +170,6 @@ func timeWithOffset(timer Timer) time.Time {
 	}
 
 	times := strings.Split(offsetStr, " ")
-	// log.Printf("times %v", times)
 	if len(times) == 2 && times[1][:3] == "sec" {
 		offset, _ = strconv.Atoi(times[0])
 	} else if len(times) == 2 && times[1][:3] == "min" {
@@ -199,10 +184,8 @@ func timeWithOffset(timer Timer) time.Time {
 			log.Printf("Error: invalid time format: %s", timer.Time)
 		}
 	}
-	// log.Printf("timeWithOffset: oTime %s, from %s", oTime, timer.Time)
 	offsetTime = offsetTime.Add(time.Duration(-1*offset) * time.Second)
 
-	// log.Printf("timeWithOffset: At %s", oTime.Format("15:04:05"))
 	return offsetTime
 }
 
@@ -212,42 +195,56 @@ func setDailyTimes(s *gocron.Scheduler) {
 
 	// Sunrise
 	sunriseTime := sunrise.Local()
+	sunriseStr := sunriseTime.Format("15:04")
 	if sunriseTime.After(time.Now().Local()) {
 		timer := Timer{}
 		timer.Id = "sunrise"
+		timer.Description = fmt.Sprintf("at %s", sunriseStr)
 		timer.Time = "sunrise"
 		job, _ := s.Every(1).Day().At(sunriseTime).Do(handleEvent, timer)
 		job.LimitRunsTo(1)
-		log.Printf("Set Sunrise %s", sunriseTime.Format("15:04:05"))
-		if sunriseTimer.Time != "" {
-			sunriseTime = sunriseTime.Add(offsetDuration(sunriseTimer))
-			job, _ := s.Every(1).Day().At(sunriseTime).Do(handleEvent, sunriseTimer)
-			job.LimitRunsTo(1)
-			log.Printf("Set Scheduled Sunrise %s", sunriseTime.Format("15:04:05"))
-		}
+		log.Printf("Sunrise today %s", timer.Description)
 	}
 
 	// Sunset
 	sunsetTime := sunset.Local()
+	sunsetStr := sunsetTime.Format("15:04")
 	if sunsetTime.After(time.Now().Local()) {
 		timer := Timer{}
 		timer.Id = "sunset"
+		timer.Description = fmt.Sprintf("at %s", sunsetStr)
 		timer.Time = "sunset"
 		job, _ := s.Every(1).Day().At(sunsetTime).Do(handleEvent, timer)
 		job.LimitRunsTo(1)
-		log.Printf("Set Sunset %s", sunsetTime.Format("15:04:05"))
-		if sunsetTimer.Time != "" {
-			sunsetTime = sunsetTime.Add(offsetDuration(sunriseTimer))
-			job, _ := s.Every(1).Day().At(sunsetTime).Do(handleEvent, sunsetTimer)
-			job.LimitRunsTo(1)
-			log.Printf("Set Scheduled Sunset %s", sunsetTime.Format("15:04:05"))
-		}
+		log.Printf("Sunset today %s", timer.Description)
 	}
+
+	// Daily timers
+	for _, timer := range dailyTimers {
+		if timer.Time == "sunrise" {
+			if time.Now().Local().After(sunriseTime) {
+				continue
+			}
+			timer.Time = sunriseStr
+		} else if timer.Time == "sunset" {
+			if time.Now().Local().After(sunsetTime) {
+				continue
+			}
+			timer.Time = sunsetStr
+		}
+		time := timeWithOffset(timer)
+		job, _ := s.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, timer)
+		job.LimitRunsTo(1)
+		log.Printf("Scheduled '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
+	}
+
+	// refresh status
+	sendToMttRetain(TOPIC+"/status", "Online")
 }
 
 func main() {
 	zone_name, _ := time.Now().Zone()
-	log.Printf("%s starting, Local Time=%s Timezone=%s", TOPIC, time.Now().Local().Format("15:04:05"), zone_name)
+	log.Printf("%s start, Local Time=%s Timezone=%s", TOPIC, time.Now().Local().Format("15:04:05"), zone_name)
 
 	scheduler := gocron.NewScheduler(time.Now().Location())
 
@@ -269,4 +266,5 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	<-sigChan
+	log.Printf("%s stop, Local Time=%s Timezone=%s", TOPIC, time.Now().Local().Format("15:04:05"), zone_name)
 }

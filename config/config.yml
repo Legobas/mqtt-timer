@@ -1,4 +1,3 @@
-debug: false
 latitude: 51.50722
 longitude: -0.1275
 
@@ -17,7 +16,6 @@ timers:
   message: on
 - id: 002
   time: sunrise
-  randomBefore: 20 minutes
   before: 20 minutes
   description: Light outside off 20 minutes before sunrise
   topic: shellies/Shelly1/relay/0/command
@@ -50,3 +48,7 @@ timers:
   description: start dishwasher at 4:30:25
   topic: homeassistant/dishwasher
   message: '{"command": "start"}'
+- id: 008
+  time: sunset
+  after: 10 minutes
+  description: 10 minutes after sunset

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"time"
@@ -13,6 +14,22 @@ const (
 	TIMEOUT time.Duration = time.Second * 10
 )
 
+type SetTimer struct {
+	Cron         string `json:"cron"`
+	Time         string `json:"time"`
+	Before       string `json:"before"`
+	After        string `json:"after"`
+	RandomBefore string `json:"randomBefore"`
+	RandomAfter  string `json:"randomAfter"`
+	Topic        string `json:"topic"`
+	Message      string `json:"message"`
+}
+
+type Set struct {
+	Description string     `json:"description"`
+	Timers      []SetTimer `json:"timers"`
+}
+
 var mqttClient MQTT.Client
 
 func sendToMtt(topic string, message string) {
@@ -21,6 +38,30 @@ func sendToMtt(topic string, message string) {
 	}
 	log.Println("MQTT Out: " + topic + " = " + message)
 	mqttClient.Publish(topic, byte(config.Mqtt.Qos), config.Mqtt.Retain, message)
+}
+
+func sendToMttRetain(topic string, message string) {
+	if topic == "" {
+		topic = TOPIC
+	}
+	log.Println(topic + " = " + message)
+	mqttClient.Publish(topic, byte(config.Mqtt.Qos), true, message)
+}
+
+func receive(client MQTT.Client, msg MQTT.Message) {
+	topic := msg.Topic()
+	if topic[len(topic)-4:] == "/set" {
+		message := string(msg.Payload()[:])
+		log.Println("SET: " + topic + " = " + message)
+
+		var setTimer SetTimer
+		err := json.Unmarshal([]byte(message), &setTimer)
+		if err != nil {
+			log.Println("JSON Error!")
+		}
+
+		log.Printf("%+v\n", setTimer)
+	}
 }
 
 func GetClientId() string {
@@ -33,7 +74,7 @@ func connLostHandler(c MQTT.Client, err error) {
 }
 
 func startMqttClient() {
-	subscribe := TOPIC + "/set/#"
+	subscribe := TOPIC + "/#"
 
 	opts := MQTT.NewClientOptions().AddBroker(config.Mqtt.Url)
 	if config.Mqtt.Username != "" && config.Mqtt.Password != "" {
@@ -51,11 +92,7 @@ func startMqttClient() {
 		log.Fatal(token.Error())
 	}
 
-	token = mqttClient.Subscribe(subscribe, 0, func(client MQTT.Client, msg MQTT.Message) {
-		topic := msg.Topic()
-		message := string(msg.Payload()[:])
-		log.Println("MQTT In: " + topic + " = " + message)
-	})
+	token = mqttClient.Subscribe(subscribe, 0, receive)
 	if token.Wait() && token.Error() != nil {
 		log.Fatal(token.Error())
 	}
