@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"log"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -15,19 +17,15 @@ const (
 )
 
 type SetTimer struct {
-	Cron         string `json:"cron"`
-	Time         string `json:"time"`
-	Before       string `json:"before"`
-	After        string `json:"after"`
-	RandomBefore string `json:"randomBefore"`
-	RandomAfter  string `json:"randomAfter"`
-	Topic        string `json:"topic"`
-	Message      string `json:"message"`
-}
-
-type Set struct {
-	Description string     `json:"description"`
-	Timers      []SetTimer `json:"timers"`
+	Id          string   `json:"id"`
+	Description string   `json:"description"`
+	Start       string   `json:"start"`
+	Repeat      string   `json:"repeat"`
+	RepeatTimes int      `json:"repeatTimes"`
+	RandomAfter string   `json:"randomAfter"`
+	Topic       string   `json:"topic"`
+	Message     string   `json:"message"`
+	Messages    []string `json:"messages"`
 }
 
 var mqttClient MQTT.Client
@@ -57,10 +55,52 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		var setTimer SetTimer
 		err := json.Unmarshal([]byte(message), &setTimer)
 		if err != nil {
-			log.Println("JSON Error!")
+			log.Printf("JSON Error: %s", err.Error())
+			return
 		}
 
 		log.Printf("%+v\n", setTimer)
+
+		timer := Timer{}
+		timer.Id = setTimer.Id
+		timer.Description = setTimer.Description
+		timer.Time = setTimer.Start
+		timer.RandomAfter = setTimer.RandomAfter
+		timer.Topic = setTimer.Topic
+		timer.Message = setTimer.Message
+
+		matchTime, _ := regexp.Match("^\\d{1,2}(:\\d{2}){1,2}$", []byte(setTimer.Start))
+		if matchTime {
+			job, err := scheduler.Every(1).Day().At(setTimer.Start).Do(handleEvent, timer)
+			if err != nil {
+				log.Printf("Scheduler Error: %s", err.Error())
+				return
+			}
+			job.LimitRunsTo(1)
+		} else if strings.ToLower(setTimer.Start) == "now" {
+			job, err := scheduler.Every(1).Day().StartImmediately().Do(handleEvent, timer)
+			if err != nil {
+				log.Printf("Scheduler Error: %s", err.Error())
+				return
+			}
+			job.LimitRunsTo(1)
+		} else if strings.Contains(setTimer.Start, "sec") || strings.Contains(setTimer.Start, "min") {
+			seconds := parseSeconds(setTimer.Start)
+			if seconds > 0 {
+				offset := time.Duration(int64(seconds) * int64(1000000000))
+				time := time.Now().Local().Add(offset)
+				job, err := scheduler.Every(1).Day().StartAt(time).Do(handleEvent, timer)
+				if err != nil {
+					log.Printf("Scheduler Error: %s", err.Error())
+					return
+				}
+				job.LimitRunsTo(1)
+			} else {
+				log.Printf("Invalid duration: %s", setTimer.Start)
+			}
+		} else {
+			log.Printf("Invalid start time: %s", setTimer.Start)
+		}
 	}
 }
 
@@ -70,7 +110,7 @@ func GetClientId() string {
 }
 
 func connLostHandler(c MQTT.Client, err error) {
-	log.Panic(err)
+	log.Fatal(err)
 }
 
 func startMqttClient() {

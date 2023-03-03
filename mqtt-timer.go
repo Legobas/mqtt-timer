@@ -17,6 +17,7 @@ import (
 
 var config = getConfig()
 var dailyTimers []Timer
+var scheduler *gocron.Scheduler
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
@@ -45,17 +46,17 @@ func handleEvent(timer Timer) {
 	}
 }
 
-func setTimers(s *gocron.Scheduler) {
+func setTimers() {
 	for _, timer := range config.Timers {
 		if timer.Cron != "" {
 			// Cron
 			if len(strings.Split(timer.Cron, " ")) == 5 {
 				log.Printf("Scheduled '%s' Cron [%s] '%s'", timer.Id, timer.Cron, timer.Description)
-				s.Cron(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
+				scheduler.Cron(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else if len(strings.Split(timer.Cron, " ")) == 6 {
 				// Cron with Seconds
 				log.Printf("Scheduled '%s' Cron [%s] '%s'", timer.Id, timer.Cron, timer.Description)
-				s.CronWithSeconds(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
+				scheduler.CronWithSeconds(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else {
 				log.Printf("Invalid Cron format: [%s]", timer.Cron)
 			}
@@ -68,9 +69,9 @@ func setTimers(s *gocron.Scheduler) {
 
 			match, _ := regexp.Match("^\\d{1,2}(:\\d{2}){1,2}$", []byte(timer.Time))
 			if match {
-				schedule := s.Every(1).Day()
+				schedule := scheduler.Every(1).Day()
 				if timer.Days != "" {
-					schedule = s.Every(1).Week()
+					schedule = scheduler.Every(1).Week()
 					if strings.Contains(timer.Days, "mon") {
 						schedule = schedule.Monday()
 					}
@@ -140,28 +141,29 @@ func offsetDuration(timer Timer) time.Duration {
 		random = true
 	}
 
-	times := strings.Split(offsetStr, " ")
-	if len(times) == 2 && times[1][:3] == "sec" {
-		seconds, _ := strconv.Atoi(times[0])
-		if random {
-			offset = int64(rand.Intn(seconds)) * int64(1000000000)
-		} else {
-			offset = int64(seconds) * int64(1000000000)
-		}
-	} else if len(times) == 2 && times[1][:3] == "min" {
-		minutes, _ := strconv.Atoi(times[0])
-		if random {
-			offset = int64(rand.Intn(minutes)) * int64(60000000000)
-		} else {
-			offset = int64(minutes) * int64(60000000000)
-		}
+	seconds := parseSeconds(offsetStr)
+	if random {
+		offset = int64(rand.Intn(seconds)) * int64(1000000000)
+	} else {
+		offset = int64(seconds) * int64(1000000000)
 	}
+
 	return time.Duration(offset)
 }
 
-func timeBefore(timer Timer) time.Time {
-	offset := 0
+func parseSeconds(timeExpr string) int {
+	seconds := 0
+	times := strings.Split(timeExpr, " ")
+	if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "sec" {
+		seconds, _ = strconv.Atoi(times[0])
+	} else if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "min" {
+		minutes, _ := strconv.Atoi(times[0])
+		seconds = minutes * 60
+	}
+	return seconds
+}
 
+func timeBefore(timer Timer) time.Time {
 	offsetStr := ""
 	if timer.Before != "" {
 		offsetStr = timer.Before
@@ -169,13 +171,7 @@ func timeBefore(timer Timer) time.Time {
 		offsetStr = timer.RandomBefore
 	}
 
-	times := strings.Split(offsetStr, " ")
-	if len(times) == 2 && times[1][:3] == "sec" {
-		offset, _ = strconv.Atoi(times[0])
-	} else if len(times) == 2 && times[1][:3] == "min" {
-		minutes, _ := strconv.Atoi(times[0])
-		offset = minutes * 60
-	}
+	offset := parseSeconds(offsetStr)
 
 	offsetTime, err := time.Parse("15:04", timer.Time)
 	if err != nil {
@@ -189,7 +185,7 @@ func timeBefore(timer Timer) time.Time {
 	return offsetTime
 }
 
-func setDailyTimes(s *gocron.Scheduler) {
+func setDailyTimes() {
 	sunrise, sunset := sunrise.SunriseSunset(config.Latitude, config.Longitude,
 		time.Now().Year(), time.Now().Month(), time.Now().Day())
 
@@ -201,9 +197,9 @@ func setDailyTimes(s *gocron.Scheduler) {
 		timer.Id = "sunrise"
 		timer.Description = fmt.Sprintf("at %s", sunriseStr)
 		timer.Time = "sunrise"
-		job, _ := s.Every(1).Day().At(sunriseTime).Do(handleEvent, timer)
+		job, _ := scheduler.Every(1).Day().At(sunriseTime).Do(handleEvent, timer)
 		job.LimitRunsTo(1)
-		log.Printf("Sunrise today %s", timer.Description)
+		log.Printf("Today: 'Sunrise' %s", timer.Description)
 	}
 
 	// Sunset
@@ -214,9 +210,9 @@ func setDailyTimes(s *gocron.Scheduler) {
 		timer.Id = "sunset"
 		timer.Description = fmt.Sprintf("at %s", sunsetStr)
 		timer.Time = "sunset"
-		job, _ := s.Every(1).Day().At(sunsetTime).Do(handleEvent, timer)
+		job, _ := scheduler.Every(1).Day().At(sunsetTime).Do(handleEvent, timer)
 		job.LimitRunsTo(1)
-		log.Printf("Sunset today %s", timer.Description)
+		log.Printf("Today: 'Sunset' %s", timer.Description)
 	}
 
 	// Daily timers
@@ -235,9 +231,9 @@ func setDailyTimes(s *gocron.Scheduler) {
 				timer.Time = sunsetStr
 			}
 			time := timeBefore(timer)
-			job, _ := s.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, timer)
+			job, _ := scheduler.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, timer)
 			job.LimitRunsTo(1)
-			log.Printf("Scheduled '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
+			log.Printf("Today: '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
 		}
 	}
 
@@ -249,13 +245,13 @@ func main() {
 	zone_name, _ := time.Now().Zone()
 	log.Printf("%s start, Local Time=%s Timezone=%s", TOPIC, time.Now().Local().Format("15:04:05"), zone_name)
 
-	scheduler := gocron.NewScheduler(time.Now().Location())
+	scheduler = gocron.NewScheduler(time.Now().Location())
 
 	if config.Latitude != 0 && config.Longitude != 0 {
-		scheduler.Every(1).Day().At("00:00").Do(setDailyTimes, scheduler)
+		scheduler.Every(1).Day().At("00:00").Do(setDailyTimes)
 
 		// Startup: set timers for today once
-		job, _ := scheduler.Every(1).Second().Do(setDailyTimes, scheduler)
+		job, _ := scheduler.Every(1).Second().Do(setDailyTimes)
 		job.LimitRunsTo(1)
 	} else {
 		log.Println("Warning: Latitude and Longitude not set, sunrise/sunset cannot be used")
@@ -263,7 +259,7 @@ func main() {
 
 	startMqttClient()
 
-	setTimers(scheduler)
+	setTimers()
 	scheduler.StartAsync()
 
 	sigChan := make(chan os.Signal, 1)
