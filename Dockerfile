@@ -12,3 +12,4 @@ USER appuser
 COPY --from=builder /build/prg /app/
 WORKDIR /app
 CMD ["./prg"]
+VOLUME /config

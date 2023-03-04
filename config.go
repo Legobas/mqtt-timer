@@ -5,8 +5,16 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
+	"path/filepath"
 
 	"gopkg.in/yaml.v3"
+)
+
+const (
+	CONFIG_FILE = "mqtt-timer.yml"
+	CONFIG_DIR  = ".config"
+	CONFIG_ROOT = "/config"
 )
 
 type Mqtt struct {
@@ -43,9 +51,24 @@ type Config struct {
 func getConfig() Config {
 	var config Config
 
-	data, err := ioutil.ReadFile("./config/config.yml")
+	configFile := filepath.Join(CONFIG_ROOT, CONFIG_FILE)
+	msg := configFile
+	data, err := ioutil.ReadFile(configFile)
 	if err != nil {
-		log.Fatal(err)
+		homedir, _ := os.UserHomeDir()
+		configFile := filepath.Join(homedir, CONFIG_DIR, CONFIG_FILE)
+		msg += ", " + configFile
+		data, err = ioutil.ReadFile(configFile)
+	}
+	if err != nil {
+		workingdir, _ := os.Getwd()
+		configFile := filepath.Join(workingdir, CONFIG_FILE)
+		msg += ", " + configFile
+		data, err = ioutil.ReadFile(configFile)
+	}
+	if err != nil {
+		msg = "Configuration file could not be found: " + msg
+		log.Fatal(msg)
 	}
 
 	err = yaml.Unmarshal(data, &config)

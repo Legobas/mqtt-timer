@@ -15,13 +15,14 @@ import (
 	"github.com/nathan-osman/go-sunrise"
 )
 
-var config = getConfig()
+var config Config
 var dailyTimers []Timer
 var scheduler *gocron.Scheduler
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
 	log.SetFlags(0)
+	config = getConfig()
 }
 
 func handleEvent(timer Timer) {
