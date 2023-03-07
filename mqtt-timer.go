@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -29,7 +28,11 @@ func handleEvent(timer Timer) {
 	if timer.RandomBefore != "" || timer.After != "" || timer.RandomAfter != "" {
 		time.Sleep(offsetDuration(timer))
 	}
-	log.Printf("%s: %s %s%s - %s", timer.Id, offsetDescr(timer), timer.Time, timer.Cron, timer.Description)
+	descr := ""
+	if timer.Description != "" {
+		descr = " - " + timer.Description
+	}
+	log.Printf("%s: %s %s%s%s", timer.Id, offsetDescr(timer), timer.Time, timer.Cron, descr)
 
 	topic := TOPIC + "/" + timer.Id + "/time"
 	msg := time.Now().Format("2006-01-02 15:04:05")
@@ -196,11 +199,10 @@ func setDailyTimes() {
 	if sunriseTime.After(time.Now().Local()) {
 		timer := Timer{}
 		timer.Id = "sunrise"
-		timer.Description = fmt.Sprintf("at %s", sunriseStr)
-		timer.Time = "sunrise"
+		timer.Time = sunriseStr
 		job, _ := scheduler.Every(1).Day().At(sunriseTime).Do(handleEvent, timer)
 		job.LimitRunsTo(1)
-		log.Printf("Today: 'Sunrise' %s", timer.Description)
+		log.Printf("Today: 'Sunrise' at %s", sunriseStr)
 	}
 
 	// Sunset
@@ -209,11 +211,10 @@ func setDailyTimes() {
 	if sunsetTime.After(time.Now().Local()) {
 		timer := Timer{}
 		timer.Id = "sunset"
-		timer.Description = fmt.Sprintf("at %s", sunsetStr)
-		timer.Time = "sunset"
+		timer.Time = sunsetStr
 		job, _ := scheduler.Every(1).Day().At(sunsetTime).Do(handleEvent, timer)
 		job.LimitRunsTo(1)
-		log.Printf("Today: 'Sunset' %s", timer.Description)
+		log.Printf("Today: 'Sunset' at %s", sunsetStr)
 	}
 
 	// Daily timers
@@ -252,7 +253,7 @@ func main() {
 		scheduler.Every(1).Day().At("00:00").Do(setDailyTimes)
 
 		// Startup: set timers for today once
-		job, _ := scheduler.Every(1).Second().Do(setDailyTimes)
+		job, _ := scheduler.Every(1).Day().StartImmediately().Do(setDailyTimes)
 		job.LimitRunsTo(1)
 	} else {
 		log.Println("Warning: Latitude and Longitude not set, sunrise/sunset cannot be used")
