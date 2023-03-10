@@ -65,7 +65,7 @@ func Test_offsetDuration(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := offsetDuration(tt.args.timer); got != tt.want {
+			if got := offsetDuration(&tt.args.timer); got != tt.want {
 				t.Errorf("offsetDuration() = %v, want %v", got, tt.want)
 			}
 		})
@@ -117,7 +117,7 @@ func Test_timeBefore(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := timeBefore(tt.args.timer); !reflect.DeepEqual(got, tt.want) {
+			if got := timeBefore(&tt.args.timer, tt.args.timer.Time); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("timeWithOffset() = %v, want %v", got, tt.want)
 			}
 		})
@@ -148,7 +148,7 @@ func Test_offsetDescr(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := offsetDescr(tt.args.timer); got != tt.want {
+			if got := offsetDescr(&tt.args.timer); got != tt.want {
 				t.Errorf("offsetDescr() = %v, want %v", got, tt.want)
 			}
 		})

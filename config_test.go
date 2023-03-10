@@ -23,7 +23,7 @@ func Test_validate(t *testing.T) {
 		{
 			name: "Timer ID",
 			args: args{
-				config: Config{true, 0, 0, Mqtt{"url", "", "", 0, true}, []Timer{{}}},
+				config: Config{0, 0, Mqtt{"url", "", "", 0, true}, []Timer{{}}},
 			},
 			wantErr: true,
 		},

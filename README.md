@@ -2,6 +2,7 @@
 
 Programmable Timer for MQTT messaging.
 
+[![mqtt-smarthome](https://img.shields.io/badge/mqtt-smarthome-blue.svg?style=flat-square)](https://github.com/mqtt-smarthome/mqtt-smarthome)
 [![Build/Test](https://github.com/Legobas/mqtt-timer/actions/workflows/go.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/go.yml)
 [![CI/CD](https://github.com/Legobas/mqtt-timer/actions/workflows/build.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/build.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Legobas/mqtt-timer)](https://goreportcard.com/report/github.com/Legobas/mqtt-timer)
@@ -11,19 +12,22 @@ Programmable Timer for MQTT messaging.
 
 A timer is one of the most important parts of a home automation system.
 It tells lights, thermostats and other devices to adjust at certain times of the day or at specific days of the week.
-But in addition to fixed times, a timer must also know the sunrise and sunset times, because they change every day. 
+But in addition to fixed times, a timer must also know the sunrise and sunset times, as they are different each day. 
 This is possible by providing the longitude and latitude coordinates. 
-Because it is not always dark at the sunset time a timer needs to wait a certain period of time before or after sunrise/sunset. 
-In some situations it is desirable to wait a random number of seconds or minutes.
+
+Because it is not always dark at the sunset time a timer needs to wait a certain period of time before or after sunrise/sunset.    
+In some situations it is desirable to wait a random number of seconds or minutes before sending the event.
 This can for example give the impression that someone is home switching the lights on every day at a different time.
+
 Apart from these configurable timers, timers need to be programmable.
 An example is the activation of a dimmable light if motion is detected, where the light percentages will go down in the minutes after the detected movement.
-Another requirement is option to disable or cancel a timer.
-MQTT-Timer aims to meet these needs.
+
+It must be possible to disable, re-enable or cancel a timer.    
+MQTT-Timer aims to meet these requirements.
 
 In a MQTT based home automation environment a timer independent from home control software like node-red or Home Assistant increases the stability of the whole system.
 It follows the Unix/Linux philosophy: do one thing, and do it well.
-If for example node-red crashes the timers will continue to send messages at desired times.
+If for example node-red crashes the timers will continue to send messages at the specified times.
 
 ## Installation
 
