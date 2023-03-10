@@ -1,0 +1,11 @@
+version: "3.9"
+
+services:
+  MqttTimer:
+    image: legobas/mqtt-timer:latest
+    container_name: mqtt-timer
+    environment:
+      - TZ=America/New_York
+    volumes:
+      - /home/legobas/mqtt-timer:/config
+    restart: unless-stopped

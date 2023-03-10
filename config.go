@@ -37,10 +37,10 @@ type Timer struct {
 	RandomAfter  string `yaml:"randomAfter"`
 	Topic        string `yaml:"topic"`
 	Message      string `yaml:"message"`
+	Enabled      bool
 }
 
 type Config struct {
-	Debug     bool    `yaml:"debug"`
 	Latitude  float64 `yaml:"latitude"`
 	Longitude float64 `yaml:"longitude"`
 
@@ -90,6 +90,8 @@ func validate(config Config) error {
 		return errors.New("Config error: MQTT Server URL is mandatory")
 	}
 	for _, timer := range config.Timers {
+		timer.Enabled = true
+
 		if timer.Id == "" {
 			return errors.New("Config error: timer.id is mandatory")
 		}
