@@ -11,23 +11,15 @@ Programmable Timer for MQTT messaging.
 [![Docker Image Size](https://badgen.net/docker/size/legobas/mqtt-timer?icon=docker&label=image%20size)](https://hub.docker.com/r/legobas/mqtt-timer)
 
 A timer is one of the most important parts of a home automation system.
-It tells lights, thermostats and other devices to adjust at certain times of the day or at specific days of the week.
-But in addition to fixed times, a timer must also know the sunrise and sunset times, as they are different each day. 
-This is possible by providing the longitude and latitude coordinates. 
+MQTT-Timer is a flexible timer service for scheduling and automating tasks.
+It allows you to set up timers for any task, from turning on lights to running a script.
+Because it is based on the MQTT protocol can it be easily be integrated with other home automation systems. 
+It also provides a range of features such as customizable time intervals, random timers, sunrise/sunset timers and logging.
 
-Because it is not always dark at the sunset time a timer needs to wait a certain period of time before or after sunrise/sunset.    
-In some situations it is desirable to wait a random number of seconds or minutes before sending the event.
-This can for example give the impression that someone is home switching the lights on every day at a different time.
-
-Apart from these configurable timers, timers need to be programmable.
-An example is the activation of a dimmable light if motion is detected, where the light percentages will go down in the minutes after the detected movement.
-
-It must be possible to disable, re-enable or cancel a timer.    
-MQTT-Timer aims to meet these requirements.
-
-In a MQTT based home automation environment a timer independent from home control software like node-red or Home Assistant increases the stability of the whole system.
-It follows the Unix/Linux philosophy: do one thing, and do it well.
-If for example node-red crashes the timers will continue to send messages at the specified times.
+In a MQTT-based home automation environment, a timer independent from home control software like Node-Red or Home Assistant can significantly improve the stability of the system.
+Adhering to the Unix/Linux philosophy of "do one thing, and do it well," this timer will continue to send messages at the specified times, 
+even if node-red or other home control software crashes. 
+This ensures that the system remains reliable and consistent, even in the event of an unexpected interruption.
 
 ## Installation
 
@@ -102,21 +94,19 @@ Timers can be set by sending a MQTT JSON messages to the topic:
 The JSON message can use the following fields to set a timer:
  
 
-| Field       | Description                                         |
-| ----------- | --------------------------------------------------- |
-| id          | unique ID for this message (mandatory)              |
-| description | something useful                                    |
-| start       | '`now`'                                             |
-|             | duration in '`25 sec`' or '`12 min`' format         |
-|             | time in '`15:04`' or '`15:04:05`' format            |
-|             | if start is omitted the timer will fire immediately |
-| repeat      | duration in '`25 sec`' or '`12 min`' format         |
-| repeatUntil | number of times in digit(s)                         |
-|             | duration in '`25 sec`' or '`12 min`' format         |
-|             | time in '`15:04`' or '`15:04:05`' format            |
-| topic       | MQTT Topic                                          |
-| message     | raw string or JSON                                  |
-| randomAfter | offset: random number of seconds or minutes         |
+| Field       | Description                                          |
+| ----------- | ---------------------------------------------------- |
+| id          | unique ID for this message (mandatory)               |
+| description | something useful                                     |
+| start       | after: duration in '`25 sec`' or '`12 min`' format   |
+|             | at: time in '`15:04`' or '`15:04:05`' format         |
+|             | if start is omitted the timer will start immediately |
+| interval    | duration in '`25 sec`' or '`12 min`' format          |
+| until       | number of times in digit(s)                          |
+|             | duration in '`25 sec`' or '`12 min`' format          |
+|             | time in '`15:04`' or '`15:04:05`' format             |
+| topic       | MQTT Topic                                           |
+| message     | raw string or JSON                                   |
 
 
 The JSON message to disable or cancel a timer:
@@ -135,7 +125,6 @@ examples:
   "id": "light001",
   "description": "Light on after random max 10 min.",
   "start": "now,10 min, 10:15:00",
-  "randomAfter": "10 min",
   "topic": "/homeassistant/light01",
   "message": "on",
 }
@@ -144,9 +133,8 @@ examples:
   "id": "msg001",
   "description": "Dim light from now every 10 min.",
   "start": "now,10 min, 10:15:00",
-  "repeat": "1 min",
-  "repeatTimes": 10,
-  "randomAfter": "1 min",
+  "interval": "1 min",
+  "until": 10,
   "topic": "/homeassistant/light04/dimmer",
   "message": ["100%", "80%", "60%", "20%", "0%"]
 }
@@ -154,9 +142,8 @@ examples:
 {
   "id": "alarm01",
   "description": "Intruder detected",
-  "start": "now",
-  "repeat": "1 sec",
-  "repeatTimes": 100,
+  "interval": "1 sec",
+  "until": 100,
   "topic": "/homeassistant/light02",
   "message": ["on", "off"]
 }
