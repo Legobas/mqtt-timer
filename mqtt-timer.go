@@ -60,16 +60,17 @@ func handleEvent(timer *Timer) {
 }
 
 func setTimers() {
-	for _, timer := range config.Timers {
+	for i := 0; i < len(config.Timers); i++ {
+		timer := &config.Timers[i]
 		if timer.Cron != "" {
 			// Cron
 			if len(strings.Split(timer.Cron, " ")) == 5 {
 				log.Printf("Scheduled '%s' Cron [%s] '%s'", timer.Id, timer.Cron, timer.Description)
-				scheduler.Cron(timer.Cron).Tag(timer.Id).Do(handleEvent, &timer)
+				scheduler.Cron(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else if len(strings.Split(timer.Cron, " ")) == 6 {
 				// Cron with Seconds
 				log.Printf("Scheduled '%s' Cron [%s] '%s'", timer.Id, timer.Cron, timer.Description)
-				scheduler.CronWithSeconds(timer.Cron).Tag(timer.Id).Do(handleEvent, &timer)
+				scheduler.CronWithSeconds(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else {
 				log.Printf("Invalid Cron format: [%s]", timer.Cron)
 			}
@@ -107,13 +108,13 @@ func setTimers() {
 						schedule = schedule.Sunday()
 					}
 				}
-				schedTime := timeBefore(&timer, timer.Time)
-				schedule.At(schedTime).Tag(timer.Id).Do(handleEvent, &timer)
+				schedTime := timeBefore(timer, timer.Time)
+				schedule.At(schedTime).Tag(timer.Id).Do(handleEvent, timer)
 
-				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(&timer), timer.Time, timer.Description)
+				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(timer), timer.Time, timer.Description)
 			} else if timer.Time == "sunrise" || timer.Time == "sunset" {
-				dailyTimers = append(dailyTimers, &timer)
-				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(&timer), timer.Time, timer.Description)
+				dailyTimers = append(dailyTimers, timer)
+				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(timer), timer.Time, timer.Description)
 			} else {
 				log.Printf("Invalid config [%v]", timer)
 			}
@@ -245,7 +246,7 @@ func setDailyTimes() {
 				timeStr = sunsetStr
 			}
 			time := timeBefore(timer, timeStr)
-			job, _ := scheduler.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, &timer)
+			job, _ := scheduler.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, timer)
 			job.LimitRunsTo(1)
 			log.Printf("Today: '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
 		}
