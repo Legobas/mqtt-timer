@@ -230,7 +230,8 @@ func setDailyTimes() {
 	}
 
 	// Daily timers
-	for _, timer := range dailyTimers {
+	for i := 0; i < len(dailyTimers); i++ {
+		timer := dailyTimers[i]
 		day := strings.ToLower(time.Now().Local().Weekday().String()[:3])
 		if timer.Days == "" || strings.Contains(timer.Days, day) {
 			timeStr := ""
