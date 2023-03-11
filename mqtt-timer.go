@@ -20,7 +20,7 @@ const (
 )
 
 var config Config
-var dailyTimers []Timer
+var dailyTimers []*Timer
 var scheduler *gocron.Scheduler
 
 func init() {
@@ -112,7 +112,7 @@ func setTimers() {
 
 				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(&timer), timer.Time, timer.Description)
 			} else if timer.Time == "sunrise" || timer.Time == "sunset" {
-				dailyTimers = append(dailyTimers, timer)
+				dailyTimers = append(dailyTimers, &timer)
 				log.Printf("Scheduled '%s' %s %s %s '%s'", timer.Id, days, offsetDescr(&timer), timer.Time, timer.Description)
 			} else {
 				log.Printf("Invalid config [%v]", timer)
@@ -209,6 +209,7 @@ func setDailyTimes() {
 		timer := Timer{}
 		timer.Id = "sunrise"
 		timer.Time = sunriseStr
+		timer.Enabled = true
 		job, _ := scheduler.Every(1).Day().At(sunriseTime).Do(handleEvent, &timer)
 		job.LimitRunsTo(1)
 		log.Printf("Today: 'Sunrise' at %s", sunriseStr)
@@ -221,6 +222,7 @@ func setDailyTimes() {
 		timer := Timer{}
 		timer.Id = "sunset"
 		timer.Time = sunsetStr
+		timer.Enabled = true
 		job, _ := scheduler.Every(1).Day().At(sunsetTime).Do(handleEvent, &timer)
 		job.LimitRunsTo(1)
 		log.Printf("Today: 'Sunset' at %s", sunsetStr)
@@ -242,10 +244,10 @@ func setDailyTimes() {
 				}
 				timeStr = sunsetStr
 			}
-			time := timeBefore(&timer, timeStr)
+			time := timeBefore(timer, timeStr)
 			job, _ := scheduler.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, &timer)
 			job.LimitRunsTo(1)
-			log.Printf("Today: '%s' %s %s '%s'", timer.Id, offsetDescr(&timer), timer.Time, timer.Description)
+			log.Printf("Today: '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
 		}
 	}
 
