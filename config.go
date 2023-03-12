@@ -81,6 +81,10 @@ func getConfig() Config {
 		log.Fatal(err)
 	}
 
+	for i := 0; i < len(config.Timers); i++ {
+		config.Timers[i].Enabled = true
+	}
+
 	// log.Printf("%+v\n", config)
 	return config
 }
@@ -90,8 +94,6 @@ func validate(config Config) error {
 		return errors.New("Config error: MQTT Server URL is mandatory")
 	}
 	for _, timer := range config.Timers {
-		timer.Enabled = true
-
 		if timer.Id == "" {
 			return errors.New("Config error: timer.id is mandatory")
 		}
