@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
-	"strings"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -55,28 +53,17 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		return
 	}
 
-	// check config
-	inConfig := false
-	for _, timer := range config.Timers {
-		if timer.Id == setTimer.Id {
-			inConfig = true
-			if setTimer.Enabled != nil {
-				timer.Enabled = *setTimer.Enabled
-				// only enable/disable
-				log.Printf("Set timer: '%s' enabled: %t", setTimer.Id, timer.Enabled)
-				return
-			}
-		}
+	if timerInConfig(setTimer) {
+		return
 	}
 
-	if inConfig {
-		log.Printf("Error timer '%s' defined in config", setTimer.Id)
-		return
-	} else {
-		scheduler.RemoveByTag(setTimer.Id)
-	}
+	scheduler.RemoveByTag(setTimer.Id)
 
 	var messages []string
+
+	if setTimer.Topic == "" {
+		setTimer.Topic = TIMERS_TOPIC + setTimer.Id + "/event"
+	}
 
 	if setTimer.Message != nil {
 		switch setTimer.Message.(type) {
@@ -90,68 +77,48 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		default:
 			log.Printf("Error: %s", fmt.Sprint(setTimer.Message))
 		}
+	} else {
+		messages = append(messages, setTimer.Id)
 	}
 
-	startTime := time.Now().Local().Add(time.Duration(int64(1000000000)))
-	err = errors.New("")
+	startTime, err := parseStart(setTimer.Start)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
-	if setTimer.Start != "" {
-		matchTime, _ := regexp.Match("^\\d{1,2}(:\\d{2}){1,2}$", []byte(setTimer.Start))
-		if matchTime {
-			startTime, err = time.Parse("15:04", setTimer.Start)
+	offset := parseInterval(setTimer.Interval, messages)
+
+	until, untilTime := parseUntil(setTimer.Until, startTime)
+
+	isEnd := true
+	for isEnd {
+		for _, message := range messages {
+			timer := Timer{}
+			timer.Enabled = true
+			timer.Id = setTimer.Id
+			timer.Description = fmt.Sprintf("%s [%s]", setTimer.Description, message)
+			timer.Time = startTime.Format("15:04:05")
+			timer.Topic = setTimer.Topic
+			timer.Message = message
+			job, err := scheduler.Every(1).Day().At(startTime).Tag(timer.Id).Do(handleEvent, &timer)
 			if err != nil {
-				startTime, err = time.Parse("15:04:05", setTimer.Start)
-				if err != nil {
-					log.Printf("Error: invalid time format: %s", setTimer.Start)
-					return
-				}
-			}
-		} else if strings.Contains(setTimer.Start, "sec") || strings.Contains(setTimer.Start, "min") {
-			seconds := parseSeconds(setTimer.Start)
-			if seconds > 0 {
-				offset := time.Duration(int64(seconds) * int64(1000000000))
-				startTime = time.Now().Local().Add(offset)
-			} else {
-				log.Printf("Invalid duration: %s", setTimer.Start)
+				log.Printf("Scheduler Error: %s", err.Error())
 				return
 			}
+			job.LimitRunsTo(1)
+			startTime = startTime.Add(offset)
+		}
+		if until > 0 {
+			until--
+			isEnd = until > 0
+		} else if until < 0 {
+			t1 := startTime.Hour()*60*60 + startTime.Minute()*60 + startTime.Second()
+			t2 := untilTime.Hour()*60*60 + untilTime.Minute()*60 + untilTime.Second()
+			isEnd = t1 < t2
 		} else {
-			log.Printf("Invalid start time: %s", setTimer.Start)
-			return
+			isEnd = false
 		}
-	}
-
-	// default 30 sec.
-	offset := time.Duration(int64(30) * int64(1000000000))
-	if setTimer.Interval != "" {
-		seconds := parseSeconds(setTimer.Interval)
-		if seconds > 0 {
-			offset = time.Duration(int64(seconds) * int64(1000000000))
-		} else {
-			log.Printf("Invalid interval duration: %s", setTimer.Interval)
-			return
-		}
-	} else {
-		if len(messages) > 1 {
-			log.Println("Warning: no interval set, default interval is 30 seconds")
-		}
-	}
-
-	for _, message := range messages {
-		timer := Timer{}
-		timer.Enabled = true
-		timer.Id = setTimer.Id
-		timer.Description = fmt.Sprintf("%s [%s]", setTimer.Description, message)
-		timer.Time = startTime.Format("15:04:05")
-		timer.Topic = setTimer.Topic
-		timer.Message = message
-		job, err := scheduler.Every(1).Day().At(startTime).Tag(timer.Id).Do(handleEvent, &timer)
-		if err != nil {
-			log.Printf("Scheduler Error: %s", err.Error())
-			return
-		}
-		job.LimitRunsTo(1)
-		startTime = startTime.Add(offset)
 	}
 }
 
@@ -173,6 +140,23 @@ func validateMessage(msg SetTimer) error {
 	}
 
 	return nil
+}
+
+func timerInConfig(setTimer SetTimer) bool {
+	// check config
+	for _, timer := range config.Timers {
+		if timer.Id == setTimer.Id {
+			if setTimer.Enabled != nil {
+				timer.Enabled = *setTimer.Enabled
+				// only enable/disable
+				log.Printf("Set timer: '%s' enabled: %t", setTimer.Id, timer.Enabled)
+				return true
+			}
+			log.Printf("Error timer '%s' defined in config", setTimer.Id)
+			return true
+		}
+	}
+	return false
 }
 
 func startMqttClient() {

@@ -10,7 +10,6 @@ Programmable Timer for MQTT messaging.
 [![Docker Stars](https://badgen.net/docker/stars/legobas/mqtt-timer?icon=docker&label=stars)](https://hub.docker.com/r/legobas/mqtt-timer)
 [![Docker Image Size](https://badgen.net/docker/size/legobas/mqtt-timer?icon=docker&label=image%20size)](https://hub.docker.com/r/legobas/mqtt-timer)
 
-A timer is one of the most important parts of a home automation system.
 MQTT-Timer is a flexible timer service for scheduling and automating tasks.
 It allows you to set up timers for any task, from turning on lights to running a script.
 Because it is based on the MQTT protocol can it be easily be integrated with other home automation systems. 
@@ -32,8 +31,8 @@ $ go get -u github.com/Legobas/mqtt-timer
 MQTT-Timer can be configured with the `mqtt-timer.yml` yaml configuration file.
 The `mqtt-timer.yml` file has to exist in one of the following locations:
 
- * A config directory in de filesystem root: `/config/mqtt-timer.yml`
- * A .config directory in the user home directory `~/.config/mqtt-timer.yml`
+ * A `config` directory in de filesystem root: `/config/mqtt-timer.yml`
+ * A `.config` directory in the user home directory `~/.config/mqtt-timer.yml`
  * The current working directory
 
 ## Configuration options
@@ -52,7 +51,8 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 | cron                      | Cron expression in '`30 7 * * *`' or '`15 30 7 * * *`' (with seconds) format |
 | description               | something useful                                                             |
 | topic                     | MQTT Topic                                                                   |
-| message                   | raw string or JSON                                                           |
+| message                   | string -->  message: on                                                      |
+|                           | JSON --> message: '{"device"="light1", "command"="on"}'                      |
 | before, after             | offset: fixed number of seconds or minutes                                   |
 | randomBefore, randomAfter | offset: random number of seconds or minutes                                  |
 
@@ -94,20 +94,32 @@ Timers can be set by sending a MQTT JSON messages to the topic:
 The JSON message can use the following fields to set a timer:
  
 
-| Field       | Description                                          |
-| ----------- | ---------------------------------------------------- |
-| id          | unique ID for this message (mandatory)               |
-| description | something useful                                     |
-| start       | after: duration in '`25 sec`' or '`12 min`' format   |
-|             | at: time in '`15:04`' or '`15:04:05`' format         |
-|             | if start is omitted the timer will start immediately |
-| interval    | duration in '`25 sec`' or '`12 min`' format          |
-| until       | number of times in digit(s)                          |
-|             | duration in '`25 sec`' or '`12 min`' format          |
-|             | time in '`15:04`' or '`15:04:05`' format             |
-| topic       | MQTT Topic                                           |
-| message     | raw string or JSON                                   |
+| Field       | Description                                               | Default                      |
+| ----------- | --------------------------------------------------------- | ---------------------------- |
+| id          | unique ID for this message (mandatory)                    |                              |
+| description | something useful                                          |                              |
+| start       | after: duration in '`25 sec`' or '`12 min`' format        | immediately                  |
+|             | at: time in '`15:04`' or '`15:04:05`' format              |                              |
+| interval    | duration in '`25 sec`' or '`12 min`' format               | 30 seconds                   |
+| until       | number of times in '`10 times`' or '`10`' format          | 1 time                       |
+|             | duration in '`25 sec`' or '`12 min`' format               |                              |
+|             | time in '`15:04`' or '`15:04:05`' format                  |                              |
+| topic       | MQTT Topic                                                | MQTT-Timer/timers/<id>/event |
+|             | JSON Array --> "topic": ["device1/cmd", "device2/cmd"]    |                              |
+| message     | MQTT Message -->  "message": "on"                         | id                           |
+|             | JSON --> "message": "{'device'='light1', 'command'='on'}" |                              |
+|             | JSON Array --> "message": ["green", "red", "blue"]        |                              |
 
+
+### Disable/Enable timer
+
+Timers can be disabled by sending a message with the enabled field set to false.
+
+Behavior if a message with enabled=false is received:
+* Configurable timers will be paused.
+* Programmable timer will be removed from the scheduler.
+
+If the enabled field is set no other fields will be applied.
 
 The JSON message to disable or cancel a timer:
 
@@ -117,35 +129,38 @@ The JSON message to disable or cancel a timer:
 | enabled | true or false                                             |
 |         | true (re-enable) can only be used for configurable timers |
 
-
 examples:
 
+
 ```json
-{
-  "id": "light001",
-  "description": "Light on after random max 10 min.",
-  "start": "now,10 min, 10:15:00",
-  "topic": "/homeassistant/light01",
-  "message": "on",
-}
-
-{
-  "id": "msg001",
-  "description": "Dim light from now every 10 min.",
-  "start": "now,10 min, 10:15:00",
-  "interval": "1 min",
-  "until": 10,
-  "topic": "/homeassistant/light04/dimmer",
-  "message": ["100%", "80%", "60%", "20%", "0%"]
-}
-
 {
   "id": "alarm01",
   "description": "Intruder detected",
   "interval": "1 sec",
-  "until": 100,
+  "until": "100 times",
   "topic": "/homeassistant/light02",
   "message": ["on", "off"]
+}
+```
+```json
+{
+  "id": "light01",
+  "description": "Light on after random max 10 min.",
+  "start": "10 min",
+  "topic": "/homeassistant/light01",
+  "message": "on",
+}
+```
+
+```json
+{
+  "id": "dim01",
+  "description": "Dim light from now every minute",
+  "start": "10:15:00",
+  "interval": "1 min",
+  "until": "10:20:00",
+  "topic": "/homeassistant/light04/dimmer",
+  "message": ["100%", "80%", "60%", "20%", "0%"]
 }
 ```
 
@@ -186,7 +201,6 @@ $ docker run -e TZ=America/New_York mqtt-timer
 
 ## Credits
 
-Libraries:
 * [GoCron](https://github.com/go-co-op/gocron)
 * [Paho Mqtt Client](https://github.com/eclipse/paho.mqtt.golang)
 * [GoSunrise](https://github.com/nathan-osman/go-sunrise)

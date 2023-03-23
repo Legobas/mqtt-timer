@@ -76,13 +76,13 @@ func getConfig() Config {
 		log.Fatal(err)
 	}
 
+	for i := 0; i < len(config.Timers); i++ {
+		config.Timers[i].Enabled = true
+	}
+
 	err = validate(config)
 	if err != nil {
 		log.Fatal(err)
-	}
-
-	for i := 0; i < len(config.Timers); i++ {
-		config.Timers[i].Enabled = true
 	}
 
 	// log.Printf("%+v\n", config)
