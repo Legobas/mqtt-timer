@@ -142,10 +142,11 @@ examples:
   "message": ["on", "off"]
 }
 ```
+
 ```json
 {
   "id": "light01",
-  "description": "Light on after random max 10 min.",
+  "description": "Light on after 10 min.",
   "start": "10 min",
   "topic": "/homeassistant/light01",
   "message": "on",
@@ -154,8 +155,8 @@ examples:
 
 ```json
 {
-  "id": "dim01",
-  "description": "Dim light from now every minute",
+  "id": "crazy dimmer",
+  "description": "Dim light from 100% to 0% every minute from 10:15 to 10:20",
   "start": "10:15:00",
   "interval": "1 min",
   "until": "10:20:00",
