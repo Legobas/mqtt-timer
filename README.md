@@ -51,8 +51,8 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 | cron                      | Cron expression in '`30 7 * * *`' or '`15 30 7 * * *`' (with seconds) format |
 | description               | something useful                                                             |
 | topic                     | MQTT Topic                                                                   |
-| message                   | string -->  message: on                                                      |
-|                           | JSON --> message: '{"device"="light1", "command"="on"}'                      |
+| message                   | string -->  message: `on`                                                    |
+|                           | JSON --> message: `'{"device"="light1", "command"="on"}'`                    |
 | before, after             | offset: fixed number of seconds or minutes                                   |
 | randomBefore, randomAfter | offset: random number of seconds or minutes                                  |
 
@@ -94,43 +94,22 @@ Timers can be set by sending a MQTT JSON messages to the topic:
 The JSON message can use the following fields to set a timer:
  
 
-| Field       | Description                                               | Default                      |
-| ----------- | --------------------------------------------------------- | ---------------------------- |
-| id          | unique ID for this message (mandatory)                    |                              |
-| description | something useful                                          |                              |
-| start       | after: duration in '`25 sec`' or '`12 min`' format        | immediately                  |
-|             | at: time in '`15:04`' or '`15:04:05`' format              |                              |
-| interval    | duration in '`25 sec`' or '`12 min`' format               | 30 seconds                   |
-| until       | number of times in '`10 times`' or '`10`' format          | 1 time                       |
-|             | duration in '`25 sec`' or '`12 min`' format               |                              |
-|             | time in '`15:04`' or '`15:04:05`' format                  |                              |
-| topic       | MQTT Topic                                                | MQTT-Timer/timers/<id>/event |
-|             | JSON Array --> "topic": ["device1/cmd", "device2/cmd"]    |                              |
-| message     | MQTT Message -->  "message": "on"                         | id                           |
-|             | JSON --> "message": "{'device'='light1', 'command'='on'}" |                              |
-|             | JSON Array --> "message": ["green", "red", "blue"]        |                              |
-
-
-### Disable/Enable timer
-
-Timers can be disabled by sending a message with the enabled field set to false.
-
-Behavior if a message with enabled=false is received:
-* Configurable timers will be paused.
-* Programmable timer will be removed from the scheduler.
-
-If the enabled field is set no other fields will be applied.
-
-The JSON message to disable or cancel a timer:
-
-| Field   | Description                                               |
-| ------- | --------------------------------------------------------- |
-| id      | unique ID for this message (mandatory)                    |
-| enabled | true or false                                             |
-|         | true (re-enable) can only be used for configurable timers |
+| Field       | Description                                                 | Default                      |
+| ----------- | ----------------------------------------------------------- | ---------------------------- |
+| id          | unique ID for this message (mandatory)                      |                              |
+| description | something useful                                            |                              |
+| start       | after: duration in `25 sec` or `12 min` format              | immediately                  |
+|             | at: time in `15:04` or `15:04:05` format                    |                              |
+| interval    | duration in `25 sec` or `12 min` format                     | 30 seconds                   |
+| until       | number of times in `10 times` or `10` format                | 1 time                       |
+|             | duration in `25 sec` or `12 min` format                     |                              |
+|             | time in `15:04` or `15:04:05` format                        |                              |
+| topic       | MQTT Topic                                                  | MQTT-Timer/timers/<id>/event |
+| message     | MQTT Message -->  "message": `"on"`                         | id                           |
+|             | JSON --> "message": `"{'device'='light1', 'command'='on'}"` |                              |
+|             | JSON Array --> "message": `["green", "red", "blue"]`        |                              |
 
 examples:
-
 
 ```json
 {
@@ -164,6 +143,24 @@ examples:
   "message": ["100%", "80%", "60%", "20%", "0%"]
 }
 ```
+
+### Disable/Enable timer
+
+Timers can be disabled by sending a message with the enabled field set to false.
+
+Behavior if a message with enabled=false is received:
+* Configurable timers will be paused.
+* Programmable timer will be removed from the scheduler.
+
+If the enabled field is set no other fields will be applied.
+
+The JSON message to disable or cancel a timer:
+
+| Field   | Description                                               |
+| ------- | --------------------------------------------------------- |
+| id      | unique ID for this message (mandatory)                    |
+| enabled | true or false                                             |
+|         | true (re-enable) can only be used for configurable timers |
 
 ## Docker
 
