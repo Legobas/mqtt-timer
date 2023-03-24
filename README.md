@@ -94,20 +94,20 @@ Timers can be set by sending a MQTT JSON messages to the topic:
 The JSON message can use the following fields to set a timer:
  
 
-| Field       | Description                                                 | Default                      |
-| ----------- | ----------------------------------------------------------- | ---------------------------- |
-| id          | unique ID for this message (mandatory)                      |                              |
-| description | something useful                                            |                              |
-| start       | after: duration in `25 sec` or `12 min` format              | immediately                  |
-|             | at: time in `15:04` or `15:04:05` format                    |                              |
-| interval    | duration in `25 sec` or `12 min` format                     | 30 seconds                   |
-| until       | number of times in `10 times` or `10` format                | 1 time                       |
-|             | duration in `25 sec` or `12 min` format                     |                              |
-|             | time in `15:04` or `15:04:05` format                        |                              |
-| topic       | MQTT Topic                                                  | MQTT-Timer/timers/<id>/event |
-| message     | MQTT Message -->  "message": `"on"`                         | id                           |
-|             | JSON --> "message": `"{'device'='light1', 'command'='on'}"` |                              |
-|             | JSON Array --> "message": `["green", "red", "blue"]`        |                              |
+| Field       | Description                                                 | Default                        |
+| ----------- | ----------------------------------------------------------- | ------------------------------ |
+| id          | unique ID for this message (mandatory)                      |                                |
+| description | something useful                                            |                                |
+| start       | after: duration in `25 sec` or `12 min` format              | immediately                    |
+|             | at: time in `15:04` or `15:04:05` format                    |                                |
+| interval    | duration in `25 sec` or `12 min` format                     | 30 seconds                     |
+| until       | number of times in `10 times` or `10` format                | 1 time                         |
+|             | duration in `25 sec` or `12 min` format                     |                                |
+|             | time in `15:04` or `15:04:05` format                        |                                |
+| topic       | MQTT Topic                                                  | `MQTT-Timer/timers/<id>/event` |
+| message     | MQTT Message -->  "message": `"on"`                         | id                             |
+|             | JSON --> "message": `"{'device'='light1', 'command'='on'}"` |                                |
+|             | JSON Array --> "message": `["green", "red", "blue"]`        |                                |
 
 examples:
 
