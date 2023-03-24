@@ -9,6 +9,18 @@ import (
 	"time"
 )
 
+func parseSeconds(timeExpr string) int {
+	seconds := 0
+	times := strings.Split(timeExpr, " ")
+	if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "sec" {
+		seconds, _ = strconv.Atoi(times[0])
+	} else if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "min" {
+		minutes, _ := strconv.Atoi(times[0])
+		seconds = minutes * 60
+	}
+	return seconds
+}
+
 func parseStart(startStr string) (time.Time, error) {
 	startTime := time.Now().Local().Add(time.Duration(int64(1000000000)))
 	var err error

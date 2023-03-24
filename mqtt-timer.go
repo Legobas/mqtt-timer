@@ -6,7 +6,6 @@ import (
 	"os"
 	"os/signal"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -163,18 +162,6 @@ func offsetDuration(timer *Timer) time.Duration {
 	}
 
 	return time.Duration(offset)
-}
-
-func parseSeconds(timeExpr string) int {
-	seconds := 0
-	times := strings.Split(timeExpr, " ")
-	if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "sec" {
-		seconds, _ = strconv.Atoi(times[0])
-	} else if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "min" {
-		minutes, _ := strconv.Atoi(times[0])
-		seconds = minutes * 60
-	}
-	return seconds
 }
 
 func timeBefore(timer *Timer, timeStr string) time.Time {
