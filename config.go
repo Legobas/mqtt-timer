@@ -37,7 +37,8 @@ type Timer struct {
 	RandomAfter  string `yaml:"randomAfter"`
 	Topic        string `yaml:"topic"`
 	Message      string `yaml:"message"`
-	Enabled      bool
+	Enabled      *bool  `yaml:"enabled,omitempty"`
+	Active       bool
 }
 
 type Config struct {
@@ -77,7 +78,11 @@ func getConfig() Config {
 	}
 
 	for i := 0; i < len(config.Timers); i++ {
-		config.Timers[i].Enabled = true
+		if config.Timers[i].Enabled != nil {
+			config.Timers[i].Active = *config.Timers[i].Enabled
+		} else {
+			config.Timers[i].Active = true
+		}
 	}
 
 	err = validate(config)

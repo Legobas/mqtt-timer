@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
@@ -24,7 +25,7 @@ type SetTimer struct {
 	Until       string      `json:"until"`
 	Topic       string      `json:"topic"`
 	Message     interface{} `json:"message"`
-	Enabled     *bool       `json:"enabled,omitempty"`
+	Enable      *bool       `json:"enable,omitempty"`
 }
 
 var mqttClient MQTT.Client
@@ -57,7 +58,13 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		return
 	}
 
-	scheduler.RemoveByTag(setTimer.Id)
+	removed := scheduler.RemoveByTag(setTimer.Id)
+	if setTimer.Enable != nil {
+		if removed == nil && !*setTimer.Enable {
+			log.Printf("Programmable Timer '%s' removed", setTimer.Id)
+		}
+		return
+	}
 
 	var messages []string
 
@@ -95,9 +102,9 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 	for isEnd {
 		for _, message := range messages {
 			timer := Timer{}
-			timer.Enabled = true
+			timer.Active = true
 			timer.Id = setTimer.Id
-			timer.Description = fmt.Sprintf("%s [%s]", setTimer.Description, message)
+			timer.Description = strings.TrimPrefix(fmt.Sprintf("%s [%s]", setTimer.Description, message), " ")
 			timer.Time = startTime.Format("15:04:05")
 			timer.Topic = setTimer.Topic
 			timer.Message = message
@@ -146,10 +153,10 @@ func timerInConfig(setTimer SetTimer) bool {
 	// check config
 	for _, timer := range config.Timers {
 		if timer.Id == setTimer.Id {
-			if setTimer.Enabled != nil {
-				timer.Enabled = *setTimer.Enabled
+			if setTimer.Enable != nil {
+				timer.Active = *setTimer.Enable
 				// only enable/disable
-				log.Printf("Set timer: '%s' enabled: %t", setTimer.Id, timer.Enabled)
+				log.Printf("Set timer: '%s' enabled: %t", setTimer.Id, timer.Active)
 				return true
 			}
 			log.Printf("Error timer '%s' defined in config", setTimer.Id)

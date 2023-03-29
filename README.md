@@ -48,6 +48,7 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 | **Timers**                |                                                                              |
 | id                        | Unique ID for this message (mandatory)                                       |
 | time                      | Time in `15:04` or `15:04:05` format                                         |
+|                           | `sunrise` or `sunset`                                                        |
 | cron                      | Cron expression in '`30 7 * * *`' or '`15 30 7 * * *`' (with seconds) format |
 | description               | something useful                                                             |
 | topic                     | MQTT Topic                                                                   |
@@ -55,6 +56,7 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 |                           | JSON --> message: `'{"device"="light1", "command"="on"}'`                    |
 | before, after             | offset: fixed number of seconds or minutes                                   |
 | randomBefore, randomAfter | offset: random number of seconds or minutes                                  |
+| enabled                   | true (default), false                                                        |
 
 Example mqtt-timer.yml:
 
@@ -91,9 +93,8 @@ Timers can be set by sending a MQTT JSON messages to the topic:
 
     MQTT-Timer/set
 
-The JSON message can use the following fields to set a timer:
+The following fields can be part of the JSON message:
  
-
 | Field       | Description                                                 | Default                        |
 | ----------- | ----------------------------------------------------------- | ------------------------------ |
 | id          | unique ID for this message (mandatory)                      |                                |
