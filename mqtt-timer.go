@@ -158,7 +158,7 @@ func offsetDuration(timer *Timer) time.Duration {
 		random = true
 	}
 
-	seconds := parseSeconds(offsetStr)
+	seconds := parseDuration(offsetStr)
 	if random {
 		offset = int64(rand.Intn(seconds)) * int64(1000000000)
 	} else {
@@ -176,7 +176,7 @@ func timeBefore(timer *Timer, timeStr string) time.Time {
 		offsetStr = timer.RandomBefore
 	}
 
-	offset := parseSeconds(offsetStr)
+	offset := parseDuration(offsetStr)
 
 	offsetTime, err := time.Parse("15:04", timeStr)
 	if err != nil {

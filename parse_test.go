@@ -170,7 +170,7 @@ func Test_parseUntil(t *testing.T) {
 	}
 }
 
-func Test_parseSeconds(t *testing.T) {
+func Test_parseDuration(t *testing.T) {
 	type args struct {
 		timeExpr string
 	}
@@ -219,10 +219,24 @@ func Test_parseSeconds(t *testing.T) {
 			},
 			want: 600,
 		},
+		{
+			name: "1 hour",
+			args: args{
+				timeExpr: "1 hour",
+			},
+			want: 3600,
+		},
+		{
+			name: "2 hours",
+			args: args{
+				timeExpr: "2 hours",
+			},
+			want: 7200,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseSeconds(tt.args.timeExpr); got != tt.want {
+			if got := parseDuration(tt.args.timeExpr); got != tt.want {
 				t.Errorf("parseSeconds() = %v, want %v", got, tt.want)
 			}
 		})

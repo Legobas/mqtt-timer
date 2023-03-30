@@ -61,7 +61,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 	removed := scheduler.RemoveByTag(setTimer.Id)
 	if setTimer.Enable != nil {
 		if removed == nil && !*setTimer.Enable {
-			log.Printf("Programmable Timer '%s' removed", setTimer.Id)
+			log.Printf("%s: reset", setTimer.Id)
 		}
 		return
 	}
@@ -155,11 +155,14 @@ func timerInConfig(setTimer SetTimer) bool {
 		if timer.Id == setTimer.Id {
 			if setTimer.Enable != nil {
 				timer.Active = *setTimer.Enable
-				// only enable/disable
-				log.Printf("Set timer: '%s' enabled: %t", setTimer.Id, timer.Active)
+				if timer.Active {
+					log.Printf("%s: enabled", setTimer.Id)
+				} else {
+					log.Printf("%s: disabled", setTimer.Id)
+				}
 				return true
 			}
-			log.Printf("Error timer '%s' defined in config", setTimer.Id)
+			log.Printf("Error: timer '%s' defined in config", setTimer.Id)
 			return true
 		}
 	}

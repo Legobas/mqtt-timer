@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func parseSeconds(timeExpr string) int {
+func parseDuration(timeExpr string) int {
 	seconds := 0
 	times := strings.Split(timeExpr, " ")
 	if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "sec" {
@@ -17,6 +17,9 @@ func parseSeconds(timeExpr string) int {
 	} else if len(times) == 2 && len(times[1]) > 2 && times[1][:3] == "min" {
 		minutes, _ := strconv.Atoi(times[0])
 		seconds = minutes * 60
+	} else if len(times) == 2 && len(times[1]) > 3 && times[1][:4] == "hour" {
+		minutes, _ := strconv.Atoi(times[0])
+		seconds = minutes * 3600
 	}
 	return seconds
 }
@@ -35,8 +38,8 @@ func parseStart(startStr string) (time.Time, error) {
 					return startTime, fmt.Errorf("Error: invalid time format: %s", startStr)
 				}
 			}
-		} else if strings.Contains(startStr, "sec") || strings.Contains(startStr, "min") {
-			seconds := parseSeconds(startStr)
+		} else if strings.Contains(startStr, "sec") || strings.Contains(startStr, "min") || strings.Contains(startStr, "hour") {
+			seconds := parseDuration(startStr)
 			if seconds > 0 {
 				offset := time.Duration(int64(seconds) * int64(1000000000))
 				startTime = time.Now().Local().Add(offset)
@@ -54,7 +57,7 @@ func parseInterval(intervalStr string, messages []string) time.Duration {
 	// default interval is 30 sec.
 	interval := time.Duration(int64(30) * int64(1000000000))
 	if intervalStr != "" {
-		seconds := parseSeconds(intervalStr)
+		seconds := parseDuration(intervalStr)
 		if seconds > 0 {
 			interval = time.Duration(int64(seconds) * int64(1000000000))
 		} else {
@@ -87,8 +90,8 @@ func parseUntil(untilStr string, startTime time.Time) (int, time.Time) {
 			} else {
 				until = -1
 			}
-		} else if strings.Contains(untilStr, "sec") || strings.Contains(untilStr, "min") {
-			seconds := parseSeconds(untilStr)
+		} else if strings.Contains(untilStr, "sec") || strings.Contains(untilStr, "min") || strings.Contains(untilStr, "hour") {
+			seconds := parseDuration(untilStr)
 			if seconds > 0 {
 				offset := time.Duration(int64(seconds) * int64(1000000000))
 				untilTime = startTime.Add(offset)
