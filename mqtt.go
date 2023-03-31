@@ -150,23 +150,27 @@ func validateMessage(msg SetTimer) error {
 }
 
 func timerInConfig(setTimer SetTimer) bool {
+	inConfig := false
+	id, wildcard := strings.CutSuffix(setTimer.Id, "*")
 	// check config
 	for _, timer := range config.Timers {
-		if timer.Id == setTimer.Id {
+		if timer.Id == id || wildcard && strings.HasPrefix(timer.Id, id) {
 			if setTimer.Enable != nil {
 				timer.Active = *setTimer.Enable
 				if timer.Active {
-					log.Printf("%s: enabled", setTimer.Id)
+					log.Printf("%s: enabled", timer.Id)
 				} else {
-					log.Printf("%s: disabled", setTimer.Id)
+					log.Printf("%s: disabled", timer.Id)
 				}
-				return true
+				inConfig = true
 			}
-			log.Printf("Error: timer '%s' defined in config", setTimer.Id)
-			return true
+			if !inConfig {
+				log.Printf("Error: timer '%s' defined in config", setTimer.Id)
+				inConfig = true
+			}
 		}
 	}
-	return false
+	return inConfig
 }
 
 func startMqttClient() {

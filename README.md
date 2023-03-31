@@ -90,7 +90,7 @@ See also: [Example mqtt-timer.yml](https://github.com/Legobas/mqtt-timer/blob/ma
 
 ## Programmable timers
 
-Timers can be set by sending a MQTT JSON messages to the topic:
+Timers can be set by sending a MQTT JSON message to the topic:
 
     MQTT-Timer/set
 
@@ -158,11 +158,21 @@ If the enabled field is set no other fields will be applied.
 
 The JSON message to disable or cancel a timer:
 
-| Field   | Description                                               |
-| ------- | --------------------------------------------------------- |
-| id      | unique ID for this message (mandatory)                    |
-| enabled | true or false                                             |
-|         | true (re-enable) can only be used for configurable timers |
+| Field  | Description                                                              |
+| ------ | ------------------------------------------------------------------------ |
+| id     | unique ID for this message (mandatory)                                   |
+|        | wildcard: `lamp_*` will enable/disable every timer starting with "lamp_" |
+| enable | true or false                                                            |
+|        | true (re-enable) can only be used for configurable timers                |
+
+example:
+
+```json
+{
+  "id": "light01",
+  "enable": false
+}
+```
 
 ## Docker
 
