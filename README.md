@@ -185,16 +185,16 @@ $ docker run -d -v /home/legobas/mqtt-timer:/config legobas/mqtt-timer
 Docker compose example:
 
 ```yml
-version: "3.9"
+version: "3.0"
 
 services:
   MqttTimer:
-    image: legobas/mqtt-timer
+    image: legobas/mqtt-timer:latest
     container_name: mqtt-timer
     environment:
       - TZ=America/New_York
     volumes:
-      - /home/legobas/mqtt-timer:/config
+      - /home/legobas/mqtt-timer:/config:ro
     restart: unless-stopped
 ```
 
