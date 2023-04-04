@@ -53,8 +53,6 @@ func handleEvent(timer *Timer) {
 			}
 			sendToMtt(timerTopic, msg)
 		}
-	} else {
-		log.Printf("%s: disabled", timer.Id)
 	}
 }
 
