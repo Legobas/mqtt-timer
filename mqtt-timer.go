@@ -37,7 +37,7 @@ func handleEvent(timer *Timer) {
 		if timer.Description != "" {
 			descr = " - " + timer.Description
 		}
-		log.Printf("%s: %s %s%s%s", timer.Id, offsetDescr(timer), timer.Time, timer.Cron, descr)
+		log.Printf("[%s] %s %s%s%s", timer.Id, offsetDescr(timer), timer.Time, timer.Cron, descr)
 
 		timerTopic := TIMERS_TOPIC + timer.Id
 		msg := time.Now().Format("2006-01-02 15:04:05")
