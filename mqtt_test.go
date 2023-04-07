@@ -33,12 +33,26 @@ func Test_validateMessage(t *testing.T) {
 			args: args{
 				msg: SetTimer{"ok", "", "", "", "", "", "", nil},
 			},
+			wantErr: true,
+		},
+		{
+			name: "startOnly",
+			args: args{
+				msg: SetTimer{"id", "", "start", "", "", "", "", nil},
+			},
+			wantErr: false,
+		},
+		{
+			name: "intervalOnly",
+			args: args{
+				msg: SetTimer{"id", "", "", "interval", "", "", "", nil},
+			},
 			wantErr: false,
 		},
 		{
 			name: "until without interval",
 			args: args{
-				msg: SetTimer{"id", "", "", "", "until", "", "", nil},
+				msg: SetTimer{"id", "descr", "start", "", "until", "", "", nil},
 			},
 			wantErr: true,
 		},

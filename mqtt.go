@@ -151,10 +151,14 @@ func validateMessage(msg SetTimer) error {
 	if msg.Id == "" {
 		return errors.New("id is mandatory")
 	}
-	if msg.Until != "" && msg.Interval == "" {
-		return errors.New("interval must have a value if until is specified")
-	}
-	if msg.Enable != nil {
+	if msg.Enable == nil {
+		if msg.Start == "" && msg.Interval == "" {
+			return errors.New("start or interval must be specified")
+		}
+		if msg.Until != "" && msg.Interval == "" {
+			return errors.New("interval must have a value if until is specified")
+		}
+	} else {
 		if msg.Start != "" || msg.Interval != "" || msg.Until != "" || msg.Topic != "" || msg.Message != nil {
 			return errors.New("enable cannot be combined with other fields")
 		}
