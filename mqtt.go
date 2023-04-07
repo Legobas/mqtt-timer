@@ -50,7 +50,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 
 	err = validateMessage(setTimer)
 	if err != nil {
-		log.Printf("Message error: %s", err.Error())
+		log.Printf("MQTT message error: %s", err.Error())
 		return
 	}
 
@@ -58,10 +58,19 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		return
 	}
 
+	if setTimer.Enable != nil && *setTimer.Enable {
+		log.Printf("MQTT message error: programmable timers can only be disabled")
+		return
+	}
+
 	removed := scheduler.RemoveByTag(setTimer.Id)
 	if setTimer.Enable != nil {
-		if removed == nil && !*setTimer.Enable {
-			log.Printf("Reset '%s'", setTimer.Id)
+		if removed == nil {
+			if !*setTimer.Enable {
+				log.Printf("Reset '%s'", setTimer.Id)
+			}
+		} else {
+			log.Printf("Warning: timer '%s' not found", setTimer.Id)
 		}
 		return
 	}
@@ -82,7 +91,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 				messages = append(messages, message.(string))
 			}
 		default:
-			log.Printf("Error: %s", fmt.Sprint(setTimer.Message))
+			log.Printf("Error: incorrect message type: %s", fmt.Sprint(setTimer.Message))
 		}
 	} else {
 		messages = append(messages, setTimer.Id)
@@ -140,10 +149,15 @@ func connLostHandler(c MQTT.Client, err error) {
 
 func validateMessage(msg SetTimer) error {
 	if msg.Id == "" {
-		return errors.New("Error: id is mandatory")
+		return errors.New("id is mandatory")
 	}
 	if msg.Until != "" && msg.Interval == "" {
-		return errors.New("Error: interval must have a value if until is specified")
+		return errors.New("interval must have a value if until is specified")
+	}
+	if msg.Enable != nil {
+		if msg.Start != "" || msg.Interval != "" || msg.Until != "" || msg.Topic != "" || msg.Message != nil {
+			return errors.New("enable cannot be combined with other fields")
+		}
 	}
 
 	return nil

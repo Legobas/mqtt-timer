@@ -5,6 +5,7 @@ import (
 )
 
 func Test_validateMessage(t *testing.T) {
+	enabled:= true
 	type args struct {
 		msg SetTimer
 	}
@@ -47,6 +48,20 @@ func Test_validateMessage(t *testing.T) {
 				msg: SetTimer{"id", "", "", "interval", "until", "", "", nil},
 			},
 			wantErr: false,
+		},
+		{
+			name: "enabled with start",
+			args: args{
+				msg: SetTimer{"id", "", "1 min", "", "", "", "", &enabled},
+			},
+			wantErr: true,
+		},
+		{
+			name: "enabled with message",
+			args: args{
+				msg: SetTimer{"id", "", "", "", "", "", "test", &enabled},
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {

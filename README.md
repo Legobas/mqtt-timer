@@ -145,15 +145,23 @@ examples:
 }
 ```
 
-### Disable/Enable timer
+### Disable/Enable timers
 
-Timers can be disabled by sending a message with the enabled field set to false.
+Timers can be disabled by sending a message with the `enable` field set to `false`.
 
-Behavior if a message with enabled=false is received:
+The topic to send the disable/enable JSON message to is the same:
+
+    MQTT-Timer/set
+
+Behavior if a message with `enable: false` is received:
 * Configurable timers will be paused.
-* Programmable timer will be removed from the scheduler.
+* Programmable timers will be removed from the scheduler.
 
-If the enabled field is set no other fields will be applied.
+Behavior if a message with `enable: true` is received:
+* Configurable timers will be activated.
+* Programmable timers won't change, an error message will be logged.
+
+Besides the `id` field the `enable` field has to be the only field in the message.
 
 The JSON message to disable or cancel a timer:
 
