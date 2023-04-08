@@ -37,26 +37,26 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 
 ## Configuration options
 
-| Config item               | Description                                                                  |
-| ------------------------- | ---------------------------------------------------------------------------- |
-| latitude/longitude        | GPS location used for Sunrise/Sunset                                         |
-| **MQTT**                  |                                                                              |
-| URL                       | MQTT Server URL                                                              |
-| Username/Password         | MQTT Server Credentials                                                      |
-| QOS                       | MQTT Server Quality Of Service                                               |
-| Retain                    | MQTT Server Retain messages                                                  |
-| **Timers**                |                                                                              |
-| id                        | Unique ID for this message (mandatory)                                       |
-| time                      | Time in `15:04` or `15:04:05` format                                         |
-|                           | `sunrise` or `sunset`                                                        |
-| cron                      | Cron expression in '`30 7 * * *`' or '`15 30 7 * * *`' (with seconds) format |
-| description               | something useful                                                             |
-| topic                     | MQTT Topic                                                                   |
-| message                   | string -->  message: `on`                                                    |
-|                           | JSON --> message: `'{"device"="light1", "command"="on"}'`                    |
-| before, after             | offset: fixed number of seconds or minutes                                   |
-| randomBefore, randomAfter | offset: random number of seconds or minutes                                  |
-| enabled                   | true (default), false                                                        |
+| Config item               | Description                                                              |
+| ------------------------- | ------------------------------------------------------------------------ |
+| latitude/longitude        | GPS location used for Sunrise/Sunset                                     |
+| **MQTT**                  |                                                                          |
+| URL                       | MQTT Server URL                                                          |
+| Username/Password         | MQTT Server Credentials                                                  |
+| QOS                       | MQTT Server Quality Of Service                                           |
+| Retain                    | MQTT Server Retain messages                                              |
+| **Timers**                |                                                                          |
+| id                        | Unique ID for this timer (mandatory)                                     |
+| time                      | Time in `15:04` or `15:04:05` format                                     |
+|                           | `sunrise` or `sunset`                                                    |
+| cron                      | Cron expression in `30 7 * * *` or `15 30 7 * * *` (with seconds) format |
+| description               | something useful                                                         |
+| topic                     | MQTT Topic                                                               |
+| message                   | string -->  message: `on`                                                |
+|                           | JSON --> message: `'{"device"="light1", "command"="on"}'`                |
+| before, after             | offset: fixed number of seconds or minutes                               |
+| randomBefore, randomAfter | offset: random number of seconds or minutes                              |
+| enabled                   | true (default), false                                                    |
 
 Example mqtt-timer.yml:
 

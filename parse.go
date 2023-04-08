@@ -53,7 +53,9 @@ func parseStart(startStr string) (time.Time, error) {
 	return startTime, err
 }
 
-func parseInterval(intervalStr string, messages []string) time.Duration {
+func parseInterval(intervalStr string, messages []string) (time.Duration, error) {
+	var err error
+
 	// default interval is 30 sec.
 	interval := time.Duration(int64(30) * int64(1000000000))
 	if intervalStr != "" {
@@ -61,14 +63,14 @@ func parseInterval(intervalStr string, messages []string) time.Duration {
 		if seconds > 0 {
 			interval = time.Duration(int64(seconds) * int64(1000000000))
 		} else {
-			log.Printf("Invalid time interval: %s", intervalStr)
+			err = fmt.Errorf("Invalid time interval: %s", intervalStr)
 		}
 	} else {
 		if len(messages) > 1 {
 			log.Println("Warning: no interval set, default interval is 30 seconds")
 		}
 	}
-	return interval
+	return interval, err
 }
 
 func parseUntil(untilStr string, startTime time.Time) (int, time.Time) {

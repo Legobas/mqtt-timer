@@ -103,7 +103,11 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		return
 	}
 
-	offset := parseInterval(setTimer.Interval, messages)
+	offset, err := parseInterval(setTimer.Interval, messages)
+	if err != nil {
+		log.Println(err)
+		return
+	}
 
 	until, untilTime := parseUntil(setTimer.Until, startTime)
 

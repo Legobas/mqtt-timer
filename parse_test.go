@@ -68,14 +68,21 @@ func Test_parseInterval(t *testing.T) {
 		messages    []string
 	}
 	tests := []struct {
-		name string
-		args args
-		want time.Duration
+		name    string
+		args    args
+		want    time.Duration
+		wantErr bool
 	}{
 		{
 			name: "empty",
 			args: args{"", nil},
 			want: time.Duration(30 * time.Second),
+		},
+		{
+			name:    "error",
+			args:    args{"faultyInterval", nil},
+			want:    time.Duration(30 * time.Second),
+			wantErr: true,
 		},
 		{
 			name: "300 sec",
@@ -90,7 +97,12 @@ func Test_parseInterval(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := parseInterval(tt.args.intervalStr, tt.args.messages); got != tt.want {
+			got, err := parseInterval(tt.args.intervalStr, tt.args.messages)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("parseInterval() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if got != tt.want {
 				t.Errorf("parseInterval() = %v, want %v", got, tt.want)
 			}
 		})
