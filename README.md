@@ -40,12 +40,12 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 | Config item               | Description                                                              |
 | ------------------------- | ------------------------------------------------------------------------ |
 | latitude/longitude        | GPS location used for Sunrise/Sunset                                     |
-| **MQTT**                  |                                                                          |
-| URL                       | MQTT Server URL                                                          |
-| Username/Password         | MQTT Server Credentials                                                  |
-| QOS                       | MQTT Server Quality Of Service                                           |
-| Retain                    | MQTT Server Retain messages                                              |
-| **Timers**                |                                                                          |
+| **mqtt**                  |                                                                          |
+| url                       | MQTT Server URL                                                          |
+| username/password         | MQTT Server Credentials                                                  |
+| qos                       | MQTT Server Quality Of Service                                           |
+| retain                    | MQTT Server Retain messages                                              |
+| **timers**                |                                                                          |
 | id                        | Unique ID for this timer (mandatory)                                     |
 | time                      | Time in `15:04` or `15:04:05` format                                     |
 |                           | `sunrise` or `sunset`                                                    |
@@ -147,17 +147,17 @@ examples:
 
 ### Disable/Enable timers
 
-Timers can be disabled by sending a message with the `enable` field set to `false`.
+Timers can be disabled or enabled by sending a JSON message with the `enable` field.
 
-The topic to send the disable/enable JSON message to is the same:
+The MQTT topic for the disable/enable message is the same:
 
     MQTT-Timer/set
 
-Behavior if a message with `enable: false` is received:
+The behavior if a message with `enable: false` is received:
 * Configurable timers will be paused.
 * Programmable timers will be removed from the scheduler.
 
-Behavior if a message with `enable: true` is received:
+The behavior if a message with `enable: true` is received:
 * Configurable timers will be activated.
 * Programmable timers won't change, an error message will be logged.
 
@@ -172,12 +172,19 @@ The JSON message to disable or cancel a timer:
 | enable | true or false                                                            |
 |        | true (re-enable) can only be used for configurable timers                |
 
-example:
+examples:
 
 ```json
 {
   "id": "light01",
   "enable": false
+}
+```
+
+```json
+{
+  "id": "light*",
+  "enable": true
 }
 ```
 
