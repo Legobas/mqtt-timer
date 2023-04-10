@@ -54,8 +54,8 @@ The `mqtt-timer.yml` file has to exist in one of the following locations:
 | topic                     | MQTT Topic                                                               |
 | message                   | string -->  message: `on`                                                |
 |                           | JSON --> message: `'{"device"="light1", "command"="on"}'`                |
-| before, after             | offset: fixed number of seconds or minutes                               |
-| randomBefore, randomAfter | offset: random number of seconds or minutes                              |
+| before, after             | offset: fixed duration in `25 sec`,`12 min` or `1 hour` format           |
+| randomBefore, randomAfter | offset: random duration in `25 sec`,`12 min` or `1 hour` format          |
 | enabled                   | true (default), false                                                    |
 
 Example mqtt-timer.yml:
@@ -99,11 +99,11 @@ The following fields can be part of the JSON message:
 | ----------- | ----------------------------------------------------------- | ------------------------------ |
 | id          | unique ID for this message (mandatory)                      |                                |
 | description | something useful                                            |                                |
-| start       | after: duration in `25 sec` or `12 min` format              | immediately                    |
+| start       | after: duration in `25 sec`,`12 min` or `1 hour` format     | immediately                    |
 |             | at: time in `15:04` or `15:04:05` format                    |                                |
-| interval    | duration in `25 sec` or `12 min` format                     | 30 seconds                     |
+| interval    | duration in `25 sec`,`12 min` or `1 hour` format            | 30 seconds                     |
 | until       | number of times in `10 times` or `10` format                | 1 time                         |
-|             | duration in `25 sec` or `12 min` format                     |                                |
+|             | duration in `25 sec`,`12 min` or `1 hour` format            |                                |
 |             | time in `15:04` or `15:04:05` format                        |                                |
 | topic       | MQTT Topic                                                  | `MQTT-Timer/timers/<id>/event` |
 | message     | MQTT Message -->  "message": `"on"`                         | id                             |
