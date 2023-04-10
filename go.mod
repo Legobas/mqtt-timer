@@ -1,4 +1,4 @@
-module github.com/!legobas/mqtt-timer
+module github.com/Legobas/mqtt-timer
 
 go 1.20
 
