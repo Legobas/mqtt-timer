@@ -175,14 +175,14 @@ func timerInConfig(setTimer SetTimer) bool {
 	inConfig := false
 	id, wildcard := strings.CutSuffix(setTimer.Id, "*")
 	// check config
-	for _, timer := range config.Timers {
-		if timer.Id == id || wildcard && strings.HasPrefix(timer.Id, id) {
+	for i := 0; i < len(config.Timers); i++ {
+		if config.Timers[i].Id == id || wildcard && strings.HasPrefix(config.Timers[i].Id, id) {
 			if setTimer.Enable != nil {
-				timer.Active = *setTimer.Enable
-				if timer.Active {
-					log.Printf("Enabled '%s'", timer.Id)
+				config.Timers[i].Active = *setTimer.Enable
+				if config.Timers[i].Active {
+					log.Printf("Enabled '%s'", config.Timers[i].Id)
 				} else {
-					log.Printf("Disabled '%s'", timer.Id)
+					log.Printf("Disabled '%s'", config.Timers[i].Id)
 				}
 				inConfig = true
 			}
