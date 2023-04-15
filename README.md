@@ -22,7 +22,7 @@ This ensures that the system remains reliable and consistent, even in the event 
 
 ## Installation
 
-MQTT-Timer can be used in a go environment or as a [Docker container](https://github.com/Legobas/mqtt-timer#docker):
+MQTT-Timer can be used in a go environment or as a [Docker container](#docker):
 
 ```bash
 $ go get -u github.com/Legobas/mqtt-timer
