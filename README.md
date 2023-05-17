@@ -6,7 +6,7 @@ Programmable Timer for MQTT messaging.
 [![Build/Test](https://github.com/Legobas/mqtt-timer/actions/workflows/build.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/build.yml)
 [![CI/CD](https://github.com/Legobas/mqtt-timer/actions/workflows/deploy.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/deploy.yml)
 [![CodeQL](https://github.com/Legobas/mqtt-timer/actions/workflows/codeql.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/codeql.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/Legobas/mqtt-timer)](https://goreportcard.com/report/github.com/Legobas/mqtt-timer)
+[![Go Report Card](https://goreportcard.com/badge/github.com/Legobas/mqtt-timer)](https://goreportcard.com/report/github.com/legobas/mqtt-timer)
 [![Docker Pulls](https://badgen.net/docker/pulls/legobas/mqtt-timer?icon=docker&label=pulls)](https://hub.docker.com/r/legobas/mqtt-timer)
 [![Docker Image Size](https://badgen.net/docker/size/legobas/mqtt-timer?icon=docker&label=image%20size)](https://hub.docker.com/r/legobas/mqtt-timer)
 
