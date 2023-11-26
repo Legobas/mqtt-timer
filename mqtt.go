@@ -147,10 +147,6 @@ func GetClientId() string {
 	return APPNAME + "_" + hostname
 }
 
-func connLostHandler(c MQTT.Client, err error) {
-	log.Fatal(err)
-}
-
 func validateMessage(msg SetTimer) error {
 	if msg.Id == "" {
 		return errors.New("id is mandatory")
@@ -204,7 +200,9 @@ func startMqttClient() {
 	opts.SetClientID(GetClientId())
 	opts.SetCleanSession(true)
 	opts.SetBinaryWill(APPNAME+"/status", []byte("Offline"), 0, true)
+	opts.SetAutoReconnect(true)
 	opts.SetConnectionLostHandler(connLostHandler)
+	opts.SetOnConnectHandler(onConnectHandler)
 
 	mqttClient = MQTT.NewClient(opts)
 	token := mqttClient.Connect()
@@ -212,11 +210,18 @@ func startMqttClient() {
 		log.Fatal(token.Error())
 	}
 
-	token = mqttClient.Subscribe(SUBSCRIBE, 0, receive)
-	if token.Wait() && token.Error() != nil {
-		log.Fatal(token.Error())
-	}
-
 	token = mqttClient.Publish(APPNAME+"/status", 2, true, "Online")
 	token.Wait()
+}
+
+func connLostHandler(c MQTT.Client, err error) {
+	log.Fatal(err)
+}
+
+func onConnectHandler(c MQTT.Client) {
+	log.Println("MQTT Client connected")
+	token := mqttClient.Subscribe(SUBSCRIBE, 0, receive)
+	if token.Wait() && token.Error() != nil {
+		log.Panic(token.Error())
+	}
 }

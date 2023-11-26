@@ -188,7 +188,13 @@ func timeBefore(timer *Timer, timeStr string) time.Time {
 	return offsetTime
 }
 
-func setDailyTimes() {
+func setDailyTimes(midnight bool) {
+	if midnight {
+		timerTopic := TIMERS_TOPIC + "midnight"
+		msg := time.Now().Format("2006-01-02 15:04:05")
+		sendToMtt(timerTopic+"/event", msg)
+	}
+
 	sunrise, sunset := sunrise.SunriseSunset(config.Latitude, config.Longitude,
 		time.Now().Year(), time.Now().Month(), time.Now().Day())
 
@@ -252,17 +258,17 @@ func main() {
 
 	scheduler = gocron.NewScheduler(time.Now().Location())
 
+	startMqttClient()
+
 	if config.Latitude != 0 && config.Longitude != 0 {
-		scheduler.Every(1).Day().At("00:00").Do(setDailyTimes)
+		scheduler.Every(1).Day().At("00:00").Do(setDailyTimes, true)
 
 		// Startup: set timers for today once
-		job, _ := scheduler.Every(1).Day().StartImmediately().Do(setDailyTimes)
+		job, _ := scheduler.Every(1).Day().StartImmediately().Do(setDailyTimes, false)
 		job.LimitRunsTo(1)
 	} else {
 		log.Println("Warning: Latitude and Longitude not set, sunrise/sunset cannot be used")
 	}
-
-	startMqttClient()
 
 	setTimers()
 	scheduler.StartAsync()
