@@ -27,7 +27,7 @@ jobs:
             echo "${{ steps.next_version.outputs.version }}" > version.txt
             # ls
  
-      - uses: actions4git/add-commit-push@v1
+#      - uses: actions4git/add-commit-push@v1
 
       - uses: actions/setup-go@v4
         with:
@@ -53,8 +53,9 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and Push images to DockerHub
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
+          context: .
           push: true
           platforms: linux/amd64, linux/arm64/v8, linux/arm/v7
           tags: legobas/mqtt-timer:latest,legobas/mqtt-timer:${{ steps.next_version.outputs.version }}
