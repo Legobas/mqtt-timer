@@ -22,13 +22,10 @@ jobs:
           bump: minor
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
-            echo "${{ steps.next_version.outputs.version }}"
-            echo "${{ steps.next_version.outputs.version_tag }}"
+            echo "version: ${{ steps.next_version.outputs.version }}"
+            echo "version tag: ${{ steps.next_version.outputs.version_tag }}"
             echo "${{ steps.next_version.outputs.version }}" > version.txt
-            # ls
  
-#      - uses: actions4git/add-commit-push@v1
-
       - uses: actions/setup-go@v4
         with:
           go-version: '>=1.20'
