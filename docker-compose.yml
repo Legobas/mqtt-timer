@@ -5,6 +5,7 @@ services:
     image: legobas/mqtt-timer:latest
     container_name: mqtt-timer
     environment:
+      - LOGLEVEL=debug
       - TZ=America/New_York
     volumes:
       - /home/legobas/mqtt-timer:/config
