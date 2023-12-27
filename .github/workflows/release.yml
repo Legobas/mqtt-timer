@@ -36,6 +36,11 @@ jobs:
       - name: Test
         run: go test -v ./...
 
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
