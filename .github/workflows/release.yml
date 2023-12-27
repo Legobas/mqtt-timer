@@ -18,10 +18,12 @@ jobs:
         uses: zwaldowski/semver-release-action@v3
         with:
           dry_run: false
+          prefix: v
           bump: minor
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
             echo "${{ steps.next_version.outputs.version }}"
+            echo "${{ steps.next_version.outputs.version_tag }}"
             echo "${{ steps.next_version.outputs.version }}" > version.txt
             # ls
  
