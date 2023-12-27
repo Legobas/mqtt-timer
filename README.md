@@ -4,7 +4,6 @@ Programmable Timer for MQTT messaging.
 
 [![mqtt-smarthome](https://img.shields.io/badge/mqtt-smarthome-blue.svg?style=flat-square)](https://github.com/mqtt-smarthome/mqtt-smarthome)
 [![Build/Test](https://github.com/Legobas/mqtt-timer/actions/workflows/release.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/release.yml)
-[![CI/CD](https://github.com/Legobas/mqtt-timer/actions/workflows/deploy.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/deploy.yml)
 [![CodeQL](https://github.com/Legobas/mqtt-timer/actions/workflows/codeql.yml/badge.svg)](https://github.com/Legobas/mqtt-timer/actions/workflows/codeql.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/Legobas/mqtt-timer)](https://goreportcard.com/report/github.com/legobas/mqtt-timer)
 [![Docker Pulls](https://badgen.net/docker/pulls/legobas/mqtt-timer?icon=docker&label=pulls)](https://hub.docker.com/r/legobas/mqtt-timer)
