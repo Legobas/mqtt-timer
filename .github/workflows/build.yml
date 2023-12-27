@@ -24,7 +24,10 @@ jobs:
           dry_run: true
           bump: minor
           github_token: ${{ secrets.GITHUB_TOKEN }}
-      - run: echo "${{ steps.next_version.outputs.version }}"
+      - run: |
+            echo "${{ steps.next_version.outputs.version }}"
+            ls
+            cat version.txt
 
 #        - name: Bump version and push tag
 #          id: nextTag
