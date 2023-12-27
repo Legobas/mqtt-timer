@@ -28,6 +28,14 @@ MQTT-Timer can be used in a [Go](https://go.dev) environment or as a [Docker con
 $ go get -u github.com/Legobas/mqtt-timer
 ```
 
+## Environment variables
+
+Supported environment variables:
+
+```
+LOGLEVEL = INFO/DEBUG/ERROR
+```
+
 # Configuration
 
 MQTT-Timer can be configured with the `mqtt-timer.yml` yaml configuration file.
@@ -137,13 +145,13 @@ examples:
 
 ```json
 {
-  "id": "crazy dimmer",
-  "description": "Dim light from 100% to 0% every minute from 10:15 to 10:20",
+  "id": "pulsating_dimmer",
+  "description": "Dim light from 100% to 0% and back to 100% with 10 second steps from 10:15 to 10:20",
   "start": "10:15:00",
-  "interval": "1 min",
+  "interval": "10 sec",
   "until": "10:20:00",
   "topic": "/homeassistant/light04/dimmer",
-  "message": ["100%", "80%", "60%", "20%", "0%"]
+  "message": ["100%", "80%", "60%", "20%", "0%", "20%", "60%", "80%", "100%"]
 }
 ```
 
@@ -208,6 +216,7 @@ services:
     image: legobas/mqtt-timer:latest
     container_name: mqtt-timer
     environment:
+      - LOGLEVEL=debug
       - TZ=America/New_York
     volumes:
       - /home/legobas/mqtt-timer:/config:ro
@@ -230,4 +239,4 @@ $ docker run -e TZ=America/New_York mqtt-timer
 * [GoCron](https://github.com/go-co-op/gocron)
 * [Paho Mqtt Client](https://github.com/eclipse/paho.mqtt.golang)
 * [GoSunrise](https://github.com/nathan-osman/go-sunrise)
-
+* [ZeroLog](https://github.com/rs/zerolog)

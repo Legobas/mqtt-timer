@@ -3,11 +3,10 @@ package main
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 
+	"github.com/rs/zerolog/log"
 	"gopkg.in/yaml.v3"
 )
 
@@ -54,27 +53,27 @@ func getConfig() Config {
 
 	configFile := filepath.Join(CONFIG_ROOT, CONFIG_FILE)
 	msg := configFile
-	data, err := ioutil.ReadFile(configFile)
+	data, err := os.ReadFile(configFile)
 	if err != nil {
 		homedir, _ := os.UserHomeDir()
 		configFile := filepath.Join(homedir, CONFIG_DIR, CONFIG_FILE)
 		msg += ", " + configFile
-		data, err = ioutil.ReadFile(configFile)
+		data, err = os.ReadFile(configFile)
 	}
 	if err != nil {
 		workingdir, _ := os.Getwd()
 		configFile := filepath.Join(workingdir, CONFIG_FILE)
 		msg += ", " + configFile
-		data, err = ioutil.ReadFile(configFile)
+		data, err = os.ReadFile(configFile)
 	}
 	if err != nil {
 		msg = "Configuration file could not be found: " + msg
-		log.Fatal(msg)
+		log.Fatal().Msg(msg)
 	}
 
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
 	for i := 0; i < len(config.Timers); i++ {
@@ -87,10 +86,10 @@ func getConfig() Config {
 
 	err = validate(config)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err)
 	}
 
-	// log.Printf("%+v\n", config)
+	// log.Debug().Msgf("%+v\n", config)
 	return config
 }
 

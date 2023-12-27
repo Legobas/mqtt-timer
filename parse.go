@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 func parseDuration(timeExpr string) int {
@@ -67,7 +68,7 @@ func parseInterval(intervalStr string, messages []string) (time.Duration, error)
 		}
 	} else {
 		if len(messages) > 1 {
-			log.Println("Warning: no interval set, default interval is 30 seconds")
+			log.Warn().Msg("Warning: no interval set, default interval is 30 seconds")
 		}
 	}
 	return interval, err
@@ -85,7 +86,7 @@ func parseUntil(untilStr string, startTime time.Time) (int, time.Time) {
 			if err != nil {
 				untilTime, err = time.Parse("15:04:05", untilStr)
 				if err != nil {
-					log.Printf("Error: 'until' invalid time format: %s", untilStr)
+					log.Error().Msgf("Error: 'until' invalid time format: %s", untilStr)
 				} else {
 					until = -1
 				}
@@ -99,13 +100,13 @@ func parseUntil(untilStr string, startTime time.Time) (int, time.Time) {
 				untilTime = startTime.Add(offset)
 				until = -1
 			} else {
-				log.Printf("Invalid 'until' duration: %s", untilStr)
+				log.Error().Msgf("Invalid 'until' duration: %s", untilStr)
 			}
 		} else if matchTimes {
 			times := strings.Split(untilStr, " ")
 			until, _ = strconv.Atoi(times[0])
 		} else {
-			log.Printf("Invalid 'until': %s", untilStr)
+			log.Error().Msgf("Invalid 'until': %s", untilStr)
 		}
 	}
 	return until, untilTime

@@ -4,12 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
 
 	MQTT "github.com/eclipse/paho.mqtt.golang"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -44,13 +44,13 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 	var setTimer SetTimer
 	err := json.Unmarshal([]byte(message), &setTimer)
 	if err != nil {
-		log.Printf("JSON Error: %s", err.Error())
+		log.Error().Msgf("JSON Error: %s", err.Error())
 		return
 	}
 
 	err = validateMessage(setTimer)
 	if err != nil {
-		log.Printf("MQTT message error: %s", err.Error())
+		log.Error().Msgf("MQTT message error: %s", err.Error())
 		return
 	}
 
@@ -59,7 +59,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 	}
 
 	if setTimer.Enable != nil && *setTimer.Enable {
-		log.Printf("MQTT message error: programmable timers can only be disabled")
+		log.Error().Msgf("MQTT message error: programmable timers can only be disabled")
 		return
 	}
 
@@ -67,10 +67,10 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 	if setTimer.Enable != nil {
 		if removed == nil {
 			if !*setTimer.Enable {
-				log.Printf("Reset '%s'", setTimer.Id)
+				log.Debug().Msgf("Reset '%s'", setTimer.Id)
 			}
 		} else {
-			log.Printf("Warning: timer '%s' not found", setTimer.Id)
+			log.Warn().Msgf("Warning: timer '%s' not found", setTimer.Id)
 		}
 		return
 	}
@@ -91,7 +91,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 				messages = append(messages, message.(string))
 			}
 		default:
-			log.Printf("Error: incorrect message type: %s", fmt.Sprint(setTimer.Message))
+			log.Error().Msgf("Error: incorrect message type: %s", fmt.Sprint(setTimer.Message))
 		}
 	} else {
 		messages = append(messages, setTimer.Id)
@@ -99,13 +99,13 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 
 	startTime, err := parseStart(setTimer.Start)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 		return
 	}
 
 	offset, err := parseInterval(setTimer.Interval, messages)
 	if err != nil {
-		log.Println(err)
+		log.Error().Err(err)
 		return
 	}
 
@@ -123,7 +123,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 			timer.Message = message
 			job, err := scheduler.Every(1).Day().At(startTime).Tag(timer.Id).Do(handleEvent, &timer)
 			if err != nil {
-				log.Printf("Scheduler Error: %s", err.Error())
+				log.Error().Msgf("Scheduler Error: %s", err.Error())
 				return
 			}
 			job.LimitRunsTo(1)
@@ -176,14 +176,14 @@ func timerInConfig(setTimer SetTimer) bool {
 			if setTimer.Enable != nil {
 				config.Timers[i].Active = *setTimer.Enable
 				if config.Timers[i].Active {
-					log.Printf("Enabled '%s'", config.Timers[i].Id)
+					log.Info().Msgf("Enabled '%s'", config.Timers[i].Id)
 				} else {
-					log.Printf("Disabled '%s'", config.Timers[i].Id)
+					log.Info().Msgf("Disabled '%s'", config.Timers[i].Id)
 				}
 				inConfig = true
 			}
 			if !inConfig {
-				log.Printf("Error: timer '%s' defined in config", setTimer.Id)
+				log.Error().Msgf("Error: timer '%s' defined in config", setTimer.Id)
 				inConfig = true
 			}
 		}
@@ -207,7 +207,7 @@ func startMqttClient() {
 	mqttClient = MQTT.NewClient(opts)
 	token := mqttClient.Connect()
 	if token.WaitTimeout(TIMEOUT) && token.Error() != nil {
-		log.Fatal(token.Error())
+		log.Fatal().Err(token.Error())
 	}
 
 	token = mqttClient.Publish(APPNAME+"/status", 2, true, "Online")
@@ -215,13 +215,13 @@ func startMqttClient() {
 }
 
 func connLostHandler(c MQTT.Client, err error) {
-	log.Fatal(err)
+	log.Fatal().Err(err)
 }
 
 func onConnectHandler(c MQTT.Client) {
-	log.Println("MQTT Client connected")
+	log.Info().Msg("MQTT Client connected")
 	token := mqttClient.Subscribe(SUBSCRIBE, 0, receive)
 	if token.Wait() && token.Error() != nil {
-		log.Panic(token.Error())
+		log.Panic().Err(token.Error())
 	}
 }

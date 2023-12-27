@@ -1,7 +1,8 @@
 package main
 
 import (
-	"log"
+	_ "embed"
+	"fmt"
 	"math/rand"
 	"os"
 	"os/signal"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/go-co-op/gocron"
 	"github.com/nathan-osman/go-sunrise"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 )
 
 const (
@@ -18,14 +21,39 @@ const (
 	TIMERS_TOPIC string = APPNAME + "/timers/"
 )
 
-var config Config
-var dailyTimers []*Timer
-var scheduler *gocron.Scheduler
+var (
+	//go:embed version.txt
+	VERSION     string
+	config      Config
+	dailyTimers []*Timer
+	scheduler   *gocron.Scheduler
+)
 
 func init() {
-	rand.Seed(time.Now().UnixNano())
-	log.SetFlags(0)
+	// Setup logging
+	out := zerolog.NewConsoleWriter()
+	out.NoColor = true
+	out.FormatLevel = func(i interface{}) string {
+		return strings.ToUpper(fmt.Sprintf("%-6s", i))
+	}
+	out.PartsExclude = []string{zerolog.TimestampFieldName, zerolog.CallerFieldName}
+	log.Logger = log.With().Caller().Logger()
+	log.Logger = log.Output(out)
+
+	switch strings.ToLower(os.Getenv("LOGLEVEL")) {
+	case "debug":
+		log.Logger = log.Level(zerolog.DebugLevel)
+	case "trace":
+		log.Logger = log.Level(zerolog.TraceLevel)
+	default:
+		log.Logger = log.Level(zerolog.InfoLevel)
+	}
+
+	// Get Config
 	config = getConfig()
+
+	// Print Version
+	log.Info().Msgf("%s %s", APPNAME, VERSION)
 }
 
 func handleEvent(timer *Timer) {
@@ -37,7 +65,7 @@ func handleEvent(timer *Timer) {
 		if timer.Description != "" {
 			descr = " - " + timer.Description
 		}
-		log.Printf("[%s] %s %s%s%s", timer.Id, offsetDescr(timer), timer.Time, timer.Cron, descr)
+		log.Debug().Msgf("[%s] %s %s%s%s", timer.Id, offsetDescr(timer), timer.Time, timer.Cron, descr)
 
 		timerTopic := TIMERS_TOPIC + timer.Id
 		msg := time.Now().Format("2006-01-02 15:04:05")
@@ -66,14 +94,14 @@ func setTimers() {
 		if timer.Cron != "" {
 			// Cron
 			if len(strings.Split(timer.Cron, " ")) == 5 {
-				log.Printf("Scheduled '%s'%s Cron [%s] '%s'", timer.Id, disabled, timer.Cron, timer.Description)
+				log.Info().Msgf("Scheduled '%s'%s Cron [%s] '%s'", timer.Id, disabled, timer.Cron, timer.Description)
 				scheduler.Cron(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else if len(strings.Split(timer.Cron, " ")) == 6 {
 				// Cron with Seconds
-				log.Printf("Scheduled '%s'%s Cron [%s] '%s'", timer.Id, disabled, timer.Cron, timer.Description)
+				log.Info().Msgf("Scheduled '%s'%s Cron [%s] '%s'", timer.Id, disabled, timer.Cron, timer.Description)
 				scheduler.CronWithSeconds(timer.Cron).Tag(timer.Id).Do(handleEvent, timer)
 			} else {
-				log.Printf("Invalid Cron format: [%s]", timer.Cron)
+				log.Error().Msgf("Invalid Cron format: [%s]", timer.Cron)
 			}
 		} else if timer.Time != "" {
 			// Time
@@ -112,15 +140,15 @@ func setTimers() {
 				schedTime := timeBefore(timer, timer.Time)
 				schedule.At(schedTime).Tag(timer.Id).Do(handleEvent, timer)
 
-				log.Printf("Scheduled '%s'%s %s %s %s '%s'", timer.Id, disabled, days, offsetDescr(timer), timer.Time, timer.Description)
+				log.Info().Msgf("Scheduled '%s'%s %s %s %s '%s'", timer.Id, disabled, days, offsetDescr(timer), timer.Time, timer.Description)
 			} else if timer.Time == "sunrise" || timer.Time == "sunset" {
 				dailyTimers = append(dailyTimers, timer)
-				log.Printf("Scheduled '%s'%s %s %s %s '%s'", timer.Id, disabled, days, offsetDescr(timer), timer.Time, timer.Description)
+				log.Info().Msgf("Scheduled '%s'%s %s %s %s '%s'", timer.Id, disabled, days, offsetDescr(timer), timer.Time, timer.Description)
 			} else {
-				log.Printf("Invalid config [%v]", timer)
+				log.Error().Msgf("Invalid config [%v]", timer)
 			}
 		} else {
-			log.Printf("Invalid config [%v]", timer)
+			log.Error().Msgf("Invalid config [%v]", timer)
 		}
 	}
 }
@@ -180,7 +208,7 @@ func timeBefore(timer *Timer, timeStr string) time.Time {
 	if err != nil {
 		offsetTime, err = time.Parse("15:04:05", timeStr)
 		if err != nil {
-			log.Printf("Error: invalid time format: %s", timeStr)
+			log.Error().Msgf("Error: invalid time format: %s", timeStr)
 		}
 	}
 	offsetTime = offsetTime.Add(time.Duration(-1*offset) * time.Second)
@@ -208,7 +236,7 @@ func setDailyTimes(midnight bool) {
 		timer.Active = true
 		job, _ := scheduler.Every(1).Day().At(sunriseTime).Do(handleEvent, &timer)
 		job.LimitRunsTo(1)
-		log.Printf("Today: 'Sunrise' at %s", sunriseStr)
+		log.Info().Msgf("Today: 'Sunrise' at %s", sunriseStr)
 	}
 
 	// Sunset
@@ -221,7 +249,7 @@ func setDailyTimes(midnight bool) {
 		timer.Active = true
 		job, _ := scheduler.Every(1).Day().At(sunsetTime).Do(handleEvent, &timer)
 		job.LimitRunsTo(1)
-		log.Printf("Today: 'Sunset' at %s", sunsetStr)
+		log.Info().Msgf("Today: 'Sunset' at %s", sunsetStr)
 	}
 
 	// Daily timers
@@ -244,7 +272,7 @@ func setDailyTimes(midnight bool) {
 			time := timeBefore(timer, timeStr)
 			job, _ := scheduler.Every(1).Day().At(time).Tag(timer.Id).Do(handleEvent, timer)
 			job.LimitRunsTo(1)
-			log.Printf("Today: '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
+			log.Info().Msgf("Today: '%s' %s %s '%s'", timer.Id, offsetDescr(timer), timer.Time, timer.Description)
 		}
 	}
 
@@ -254,7 +282,7 @@ func setDailyTimes(midnight bool) {
 
 func main() {
 	zoneName, _ := time.Now().Zone()
-	log.Printf("%s start, Local Time=%s Timezone=%s", APPNAME, time.Now().Local().Format("15:04:05"), zoneName)
+	log.Debug().Msgf("%s start, Local Time=%s Timezone=%s", APPNAME, time.Now().Local().Format("15:04:05"), zoneName)
 
 	scheduler = gocron.NewScheduler(time.Now().Location())
 
@@ -267,7 +295,7 @@ func main() {
 		job, _ := scheduler.Every(1).Day().StartImmediately().Do(setDailyTimes, false)
 		job.LimitRunsTo(1)
 	} else {
-		log.Println("Warning: Latitude and Longitude not set, sunrise/sunset cannot be used")
+		log.Warn().Msg("Warning: Latitude and Longitude not set, sunrise/sunset cannot be used")
 	}
 
 	setTimers()
@@ -276,5 +304,5 @@ func main() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 	<-sigChan
-	log.Printf("%s stop, Local Time=%s Timezone=%s", APPNAME, time.Now().Local().Format("15:04:05"), zoneName)
+	log.Debug().Msgf("%s stop, Local Time=%s Timezone=%s", APPNAME, time.Now().Local().Format("15:04:05"), zoneName)
 }
