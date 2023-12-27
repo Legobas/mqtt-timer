@@ -53,7 +53,7 @@ func init() {
 	config = getConfig()
 
 	// Print Version
-	log.Info().Msgf("%s %s", APPNAME, VERSION)
+	log.Info().Msgf("%s %s", APPNAME, strings.TrimSpace(VERSION))
 }
 
 func handleEvent(timer *Timer) {
