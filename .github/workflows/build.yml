@@ -16,6 +16,20 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+      - name: Bump version and push tag
+        id: nextTag
+        uses: anothrNick/github-tag-action@1.64.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WITH_V: true
+
+      - name: echo new tag
+        run: |
+          echo "The next tag version will be: ${{ steps.nextTag.outputs.new_tag }}"
+          echo "${{ steps.nextTag.outputs.new_tag }}" > version.txt
+          ls
+          cat version.txt
+
     - uses: actions/setup-go@v4
       with:
         go-version: '>=1.20'
