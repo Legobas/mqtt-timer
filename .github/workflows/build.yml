@@ -22,7 +22,7 @@ jobs:
         uses: zwaldowski/semver-release-action@v3
         with:
           dry_run: true
-          bump: ${{ … }}
+          bump: minor
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "${{ steps.next_version.outputs.version }}"
 
