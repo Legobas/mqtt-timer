@@ -26,8 +26,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
       - run: |
             echo "${{ steps.next_version.outputs.version }}"
+            echo "${{ steps.next_version.outputs.version }}" > version.txt
             ls
-            cat version.txt
 
 #        - name: Bump version and push tag
 #          id: nextTag
