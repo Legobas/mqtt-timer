@@ -73,7 +73,7 @@ func getConfig() Config {
 
 	err = yaml.Unmarshal(data, &config)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Msg("unmarshal")
 	}
 
 	for i := 0; i < len(config.Timers); i++ {
@@ -86,10 +86,10 @@ func getConfig() Config {
 
 	err = validate(config)
 	if err != nil {
-		log.Fatal().Err(err)
+		log.Fatal().Err(err).Msg("validate")
 	}
 
-	// log.Debug().Msgf("%+v\n", config)
+	// log.Printf("%+v\n", config)
 	return config
 }
 

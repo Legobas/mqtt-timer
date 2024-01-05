@@ -50,7 +50,7 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 
 	err = validateMessage(setTimer)
 	if err != nil {
-		log.Error().Msgf("MQTT message error: %s", err.Error())
+		log.Warn().Msgf("MQTT message error: %s", err.Error())
 		return
 	}
 
@@ -207,7 +207,7 @@ func startMqttClient() {
 	mqttClient = MQTT.NewClient(opts)
 	token := mqttClient.Connect()
 	if token.WaitTimeout(TIMEOUT) && token.Error() != nil {
-		log.Fatal().Err(token.Error())
+		log.Fatal().Err(token.Error()).Msg("MQTT connection")
 	}
 
 	token = mqttClient.Publish(APPNAME+"/status", 2, true, "Online")
@@ -215,13 +215,13 @@ func startMqttClient() {
 }
 
 func connLostHandler(c MQTT.Client, err error) {
-	log.Fatal().Err(err)
+	log.Fatal().Err(err).Msg("MQTT connection lost")
 }
 
 func onConnectHandler(c MQTT.Client) {
-	log.Info().Msg("MQTT Client connected")
+	log.Debug().Msg("MQTT Client connected")
 	token := mqttClient.Subscribe(SUBSCRIBE, 0, receive)
 	if token.Wait() && token.Error() != nil {
-		log.Panic().Err(token.Error())
+		log.Fatal().Err(token.Error()).Msgf("Could not subscribe to %s", SUBSCRIBE)
 	}
 }
