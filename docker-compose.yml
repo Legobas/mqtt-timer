@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   MqttTimer:
     image: legobas/mqtt-timer:latest
