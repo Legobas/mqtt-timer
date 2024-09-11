@@ -49,9 +49,6 @@ func init() {
 		log.Logger = log.Level(zerolog.InfoLevel)
 	}
 
-	// Get Config
-	config = getConfig()
-
 	// Print Version
 	log.Info().Msgf("%s %s", APPNAME, strings.TrimSpace(VERSION))
 }
@@ -281,6 +278,9 @@ func setDailyTimes(midnight bool) {
 }
 
 func main() {
+	// Get Config
+	config = getConfig()
+
 	zoneName, _ := time.Now().Zone()
 	log.Debug().Msgf("%s start, Local Time=%s Timezone=%s", APPNAME, time.Now().Local().Format("15:04:05"), zoneName)
 
