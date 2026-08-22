@@ -33,7 +33,7 @@ func init() {
 	// Setup logging
 	out := zerolog.NewConsoleWriter()
 	out.NoColor = true
-	out.FormatLevel = func(i interface{}) string {
+	out.FormatLevel = func(i any) string {
 		return strings.ToUpper(fmt.Sprintf("%-6s", i))
 	}
 	out.PartsExclude = []string{zerolog.TimestampFieldName, zerolog.CallerFieldName}

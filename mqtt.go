@@ -18,14 +18,14 @@ const (
 )
 
 type SetTimer struct {
-	Id          string      `json:"id"`
-	Description string      `json:"description"`
-	Start       string      `json:"start"`
-	Interval    string      `json:"interval"`
-	Until       string      `json:"until"`
-	Topic       string      `json:"topic"`
-	Message     interface{} `json:"message"`
-	Enable      *bool       `json:"enable,omitempty"`
+	Id          string `json:"id"`
+	Description string `json:"description"`
+	Start       string `json:"start"`
+	Interval    string `json:"interval"`
+	Until       string `json:"until"`
+	Topic       string `json:"topic"`
+	Message     any    `json:"message"`
+	Enable      *bool  `json:"enable,omitempty"`
 }
 
 var mqttClient MQTT.Client
@@ -85,8 +85,8 @@ func receive(client MQTT.Client, msg MQTT.Message) {
 		switch setTimer.Message.(type) {
 		case string:
 			messages = append(messages, setTimer.Message.(string))
-		case []interface{}:
-			msgArray := setTimer.Message.([]interface{})
+		case []any:
+			msgArray := setTimer.Message.([]any)
 			for _, message := range msgArray {
 				messages = append(messages, message.(string))
 			}
